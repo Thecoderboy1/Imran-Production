@@ -255,95 +255,6 @@ function FinalSetupScreen({ user, onComplete }: { user: User, onComplete: (data:
   );
 }
 
-function PremiumOnboardingModal({ 
-  codeStatus, 
-  onClaim, 
-  onRequest, 
-  onDismiss 
-}: { 
-  codeStatus: { exists: boolean, used: number, limit: number },
-  onClaim: () => void,
-  onRequest: () => void,
-  onDismiss: () => void
-}) {
-  const isAvailable = codeStatus.exists && codeStatus.used < codeStatus.limit;
-
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        className="absolute inset-0 bg-black/90 backdrop-blur-md" 
-      />
-      <motion.div 
-        initial={{ scale: 0.9, y: 20 }} 
-        animate={{ scale: 1, y: 0 }} 
-        className="bg-slate-900 border-2 border-emerald-500/30 p-8 md:p-12 rounded-[3.5rem] max-w-lg w-full relative z-10 text-center shadow-[0_0_80px_rgba(16,185,129,0.15)]"
-      >
-        <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-8 border border-emerald-500/20 shadow-lg shadow-emerald-500/5">
-           <Trophy className="text-emerald-500 w-8 h-8" />
-        </div>
-
-        <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight mb-4">You are one of our early members</h2>
-        <p className="text-slate-400 font-medium italic text-sm md:text-base leading-relaxed mb-10">
-          We just launched Pro features — unlimited clients, full analytics, team collaboration, invoice PDF export, and more. 
-          {isAvailable 
-            ? "As an early member you can claim free Pro access using our founder code." 
-            : "The founder code has been fully claimed but as an early member you can request Pro access directly from the developer."
-          }
-        </p>
-
-        {isAvailable ? (
-          <div className="space-y-6">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center group">
-               <p className="text-[10px] font-black text-slate-500 tracking-widest mb-1 group-hover:text-emerald-500 transition-colors">Founder Code</p>
-               <p className="text-3xl font-black text-white tracking-[0.4em]">WELCOME100</p>
-            </div>
-            
-            <div className="space-y-3">
-              <button 
-                onClick={onClaim}
-                className="w-full py-5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black tracking-widest text-sm shadow-xl shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-              >
-                Claim Pro Access
-                <Zap size={16} className="fill-white" />
-              </button>
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">
-                This code is limited. Claim it before it expires.
-              </p>
-            </div>
-            
-            <button 
-              onClick={onDismiss}
-              className="text-slate-500 hover:text-white font-black uppercase text-[10px] tracking-widest mt-4 transition-colors"
-            >
-              I'll stick with free for now
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <button 
-              onClick={onRequest}
-              className="w-full py-5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-            >
-              REQUEST PRO ACCESS
-              <Sparkles size={16} />
-            </button>
-            <p className="text-[10px] font-black text-emerald-500/70 uppercase tracking-widest bg-emerald-500/5 py-3 rounded-xl border border-emerald-500/10">
-              Request sent. Plan activates within 24h.
-            </p>
-            <button 
-              onClick={onDismiss}
-              className="text-slate-500 hover:text-white font-black uppercase text-[10px] tracking-widest mt-4 transition-colors"
-            >
-              I'll explore free features for now
-            </button>
-          </div>
-        )}
-      </motion.div>
-    </div>
-  );
-}
 
 function AppContent() {
   const [user, setUser] = useState<User | null>(null);
@@ -422,7 +333,6 @@ function AppContent() {
     }
   }, []);
   const [proRequestModal, setProRequestModal] = useState(false);
-  const [showPremiumOnboarding, setShowPremiumOnboarding] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [welcomeCodeStatus, setWelcomeCodeStatus] = useState({ exists: false, used: 0, limit: 0 });
   
@@ -577,27 +487,6 @@ function AppContent() {
     };
   }, [user]);
 
-  // Premium Onboarding Check
-  useEffect(() => {
-    if (userProfile && userProfile.onboardingCompleted && userProfile.seenPremiumOnboarding !== true) {
-      // Fetch WELCOME100 status
-      const fetchCode = async () => {
-        try {
-          const docRef = doc(db, 'inviteCodes', 'WELCOME100');
-          const snap = await getDoc(docRef);
-          if (snap.exists()) {
-            const data = snap.data();
-            setWelcomeCodeStatus({ exists: true, used: data.usedCount || 0, limit: data.maxLimit || 0 });
-          }
-          setShowPremiumOnboarding(true);
-        } catch (err) {
-          console.error("Failed to fetch welcome code:", err);
-          setShowPremiumOnboarding(true); // Still show even if check fails, fallback to request mode
-        }
-      };
-      fetchCode();
-    }
-  }, [userProfile]);
 
   // Global Data Fetching for Milestone Tracking
   useEffect(() => {
@@ -686,20 +575,6 @@ function AppContent() {
     }
   }, [darkMode]);
 
-  const markOnboardingSeen = async () => {
-    if (!user) return;
-    try {
-      await updateDoc(doc(db, 'userProfiles', user.uid), {
-        seenPremiumOnboarding: true,
-        updatedAt: serverTimestamp()
-      });
-      setShowPremiumOnboarding(false);
-    } catch (err) {
-      console.error("Failed to mark onboarding seen:", err);
-      // Even if update fails, we hide the modal to not block the user
-      setShowPremiumOnboarding(false);
-    }
-  };
 
   const handleLogin = async () => {
     // Traffic Spike Rate Limiting Check
@@ -1267,22 +1142,7 @@ function AppContent() {
         </div>
       )}
 
-      <AnimatePresence>
-        {showPremiumOnboarding && (
-          <PremiumOnboardingModal 
-            codeStatus={welcomeCodeStatus}
-            onClaim={async () => {
-              await handleInviteCode('WELCOME100');
-              await markOnboardingSeen();
-            }}
-            onRequest={async () => {
-              await handleRequestProAccess();
-              await markOnboardingSeen();
-            }}
-            onDismiss={markOnboardingSeen}
-          />
-        )}
-      </AnimatePresence>
+
 
       {/* Quick Add Modal */}
       <QuickAddProject 

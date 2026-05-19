@@ -183,11 +183,13 @@ service cloud.firestore {
       allow create: if isOwner(userId) && isValidUserProfile(incoming());
       allow update: if (isOwner(userId) || isAdmin()) && isValidUserProfile(incoming()) && (
         isAdmin() || (
-          incoming().get('uid', '') == existing().get('uid', '') &&
-          incoming().get('createdAt', request.time) == existing().get('createdAt', request.time) &&
-          (incoming().get('planType', 'free') == existing().get('planType', 'free') || (existing().get('planType', 'free') == 'free' && incoming().get('planType', 'free') == 'premium')) &&
-          (incoming().get('planExpiry', null) == existing().get('planExpiry', null) || (existing().get('planExpiry', null) == null)) &&
-          (incoming().get('role', 'free') == existing().get('role', 'free'))
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'workspaceName', 'professionalName', 'gstNumber', 'bankDetails', 'upiId', 
+            'logoUrl', 'qrUrl', 'planType', 'planExpiry', 'seenPremiumOnboarding', 
+            'feedbackPrompted', 'driveBackupEnabled', 'lastActiveAt', 'sessions', 
+            'milestones', 'unseenMilestones', 'lastBackupAt', 'studioLogo', 
+            'paymentDetails', 'teamOwnerId', 'updatedAt', 'displayName', 'photoURL', 'email'
+          ])
         )
       );
       allow delete: if isAdmin();
