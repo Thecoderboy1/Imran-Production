@@ -1,0 +1,6 @@
+{
+  "name": "Imran Production",
+  "description": "A high-end CRM and Project Tracker for video production with professional invoice generation features and user feedback system.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

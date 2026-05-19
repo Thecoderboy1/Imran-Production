@@ -1,0 +1,299 @@
+{
+  "entities": {
+    "Client": {
+      "title": "Client",
+      "description": "Represents a client in the CRM system.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the client."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The email address of the client."
+        },
+        "phone": {
+          "type": "string",
+          "description": "The phone number of the client."
+        },
+        "company": {
+          "type": "string",
+          "description": "The company name of the client."
+        },
+        "totalUnpaid": {
+          "type": "number",
+          "description": "Cached total unpaid amount for the client."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the client record was created."
+        },
+        "color": {
+          "type": "string",
+          "description": "Preferred color for this client (hex or tailwind class)."
+        }
+      },
+      "required": ["name", "createdAt"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Represents a video production project.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the project."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "The ID of the client this project belongs to."
+        },
+        "videoType": {
+          "type": "string",
+          "enum": ["Long Form", "Short Form"],
+          "description": "The type of video."
+        },
+        "budget": {
+          "type": "number",
+          "description": "The total budget for the project."
+        },
+        "pricePerVideo": {
+          "type": "number",
+          "description": "Price per individual video."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Number of videos."
+        },
+        "received": {
+          "type": "number",
+          "description": "The amount received so far."
+        },
+        "dueMoney": {
+          "type": "number",
+          "description": "The remaining amount due (Budget - Received)."
+        },
+        "paymentStatus": {
+          "type": "string",
+          "enum": ["Paid", "Not Paid"],
+          "description": "The payment status of the project."
+        },
+        "publicStatus": {
+          "type": "string",
+          "enum": ["In Queue", "Editing", "Rendering", "Revision", "Finalized"],
+          "description": "Status visible to the client."
+        },
+        "contact": {
+          "type": "string",
+          "description": "Contact information specifically for this project."
+        },
+        "driveLink": {
+          "type": "string",
+          "format": "uri",
+          "description": "Google Drive or other file sharing link."
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Project start date."
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Project completion/end date."
+        },
+        "dueDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Target delivery date."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the project was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the project was last updated."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "The ID of the user who owns this project data."
+        },
+        "assignedTo": { "type": "string" },
+        "assignedByName": { "type": "string" },
+        "priority": { "type": "string", "enum": ["Low", "Medium", "High", "Urgent"] },
+        "brief": { "type": "string" },
+        "resourceLinks": { "type": "array", "items": { "type": "string" } },
+        "progress": { "type": "string", "enum": ["Working", "Done"] }
+      },
+      "required": ["name", "clientId", "videoType", "budget", "received", "dueMoney", "paymentStatus", "createdAt", "updatedAt", "ownerId"]
+    },
+    "TeamMember": {
+      "title": "Team Member",
+      "description": "Represents a member of a production team.",
+      "type": "object",
+      "properties": {
+        "memberId": { "type": "string" },
+        "teamOwnerId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["Manager", "Employee"] },
+        "totalEarnings": { "type": "number" },
+        "status": { "type": "string", "enum": ["Pending", "Active"] },
+        "joinedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["memberId", "teamOwnerId", "name", "email", "role", "status"]
+    },
+    "Invitation": {
+      "title": "Invitation",
+      "description": "A team invitation sent to a user.",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "teamOwnerId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "recipientEmail": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["Manager", "Employee"] },
+        "status": { "type": "string", "enum": ["Pending", "Accepted", "Rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderId", "teamOwnerId", "recipientEmail", "role", "status", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "System notification for users.",
+      "type": "object",
+      "properties": {
+        "recipientId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string" },
+        "read": { "type": "boolean" },
+        "link": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["recipientId", "title", "message", "type", "read", "createdAt"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user settings and onboarding status.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The unique ID of the user (Firebase Auth UID)."
+        },
+        "workspaceName": {
+          "type": "string",
+          "description": "The name of the user's workspace/production company."
+        },
+        "userName": {
+          "type": "string",
+          "description": "The personal name of the user."
+        },
+        "onboardingCompleted": {
+          "type": "boolean",
+          "description": "Whether the user has completed the onboarding process."
+        },
+        "seenPremiumOnboarding": {
+          "type": "boolean",
+          "description": "Whether the user has seen the premium system onboarding popup."
+        },
+        "driveBackupEnabled": {
+          "type": "boolean",
+          "description": "Whether Google Drive backup is enabled."
+        },
+        "planType": {
+          "type": "string",
+          "enum": ["free", "premium"],
+          "description": "The user's subscription plan."
+        },
+        "planExpiry": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the premium plan expires."
+        },
+        "paymentDetails": {
+          "type": "object",
+          "properties": {
+            "bankName": { "type": "string" },
+            "accountNumber": { "type": "string" },
+            "ifsc": { "type": "string" },
+            "upiId": { "type": "string" },
+            "qrCode": { "type": "string", "description": "Base64 or URL of QR code" }
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the profile was created."
+        }
+      },
+      "required": ["uid", "workspaceName", "onboardingCompleted", "driveBackupEnabled", "createdAt"]
+    },
+    "ProAccessRequest": {
+      "title": "Pro Access Request",
+      "description": "A request for premium access.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "Approved", "Declined"] },
+        "requestDate": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "status", "requestDate"]
+    },
+    "InviteCode": {
+      "title": "Invite Code",
+      "description": "Pre-generated codes for premium access.",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string" },
+        "maxLimit": { "type": "number" },
+        "usedCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["code", "maxLimit", "usedCount"]
+    }
+  },
+  "firestore": {
+    "clients": {
+      "schema": "Client",
+      "description": "Collection of clients."
+    },
+    "projects": {
+      "schema": "Project",
+      "description": "Collection of video projects."
+    },
+    "userProfiles": {
+      "schema": "UserProfile",
+      "description": "User settings and profile data."
+    },
+    "teamMembers": {
+      "schema": "TeamMember",
+      "description": "Members of various teams."
+    },
+    "invitations": {
+      "schema": "Invitation",
+      "description": "Team invitations."
+    },
+    "notifications": {
+      "schema": "Notification",
+      "description": "User notifications."
+    },
+    "proAccessRequests": {
+      "schema": "ProAccessRequest",
+      "description": "Requests for pro access."
+    },
+    "inviteCodes": {
+      "schema": "InviteCode",
+      "description": "Special invite codes."
+    }
+  }
+}

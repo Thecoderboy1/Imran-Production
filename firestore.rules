@@ -1,0 +1,357 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email.lower() == 'imranraja08520@gmail.com' ||
+        request.auth.token.get('email', '').lower() == 'imranraja08520@gmail.com'
+      );
+    }
+
+    function getEmail() {
+      return (request.auth != null && request.auth.token != null && request.auth.token.get('email', '') != '') ? request.auth.token.email.lower() : "";
+    }
+
+    function isPremium() {
+      return isSignedIn() && (
+        isAdmin() || 
+        (exists(/databases/$(database)/documents/userProfiles/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.get('planType', 'free') == 'premium')
+      );
+    }
+
+    function isMemberOf(ownerId) {
+      return isSignedIn() && (
+        isAdmin() ||
+        request.auth.uid == ownerId || 
+        (ownerId != null && ownerId != "" && 
+         exists(/databases/$(database)/documents/userProfiles/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.get('teamOwnerId', '') == ownerId)
+      );
+    }
+
+    function isManagerOf(ownerId) {
+      return isSignedIn() && (
+        isAdmin() ||
+        request.auth.uid == ownerId ||
+        (ownerId != null && ownerId != '' &&
+         exists(/databases/$(database)/documents/userProfiles/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.get('teamOwnerId', '') == ownerId &&
+         get(/databases/$(database)/documents/userProfiles/$(request.auth.uid)).data.get('role', 'Employee') in ['Admin', 'Manager'])
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Validation Blueprints ---
+
+    function isValidClient(data) {
+      return data.keys().hasAll(['name', 'ownerId']) &&
+             data.name is string &&
+             isValidId(data.ownerId);
+    }
+
+    function isValidProject(data) {
+      return data.keys().hasAll(['name', 'clientId', 'budget', 'ownerId']) &&
+             data.name is string &&
+             data.clientId is string &&
+             data.budget is number &&
+             isValidId(data.ownerId);
+    }
+
+    function isValidTeamMember(data) {
+      return data.keys().hasAll(['memberId', 'teamOwnerId', 'email', 'role', 'status']) &&
+             data.memberId is string &&
+             data.teamOwnerId is string &&
+             data.email is string &&
+             data.role in ['Manager', 'Employee'] &&
+             data.status in ['Pending', 'Active'];
+    }
+
+    function isValidInvoice(data) {
+      return data.keys().hasAll(['clientId', 'ownerId', 'amount']) &&
+             data.clientId is string &&
+             data.amount is number;
+    }
+
+    function isValidInvitation(data) {
+      return data.keys().hasAll(['senderId', 'recipientEmail', 'role', 'status', 'teamOwnerId']) &&
+             data.senderId is string &&
+             data.teamOwnerId is string &&
+             data.recipientEmail is string &&
+             data.role in ['Manager', 'Employee'] &&
+             data.status in ['Pending', 'Accepted', 'Rejected'];
+    }
+
+    function isValidNotification(data) {
+      return data.keys().hasAll(['userId', 'message', 'read', 'timestamp']) &&
+             data.userId is string &&
+             data.read is bool &&
+             (data.timestamp is timestamp || data.timestamp is string);
+    }
+
+    function isValidProAccessRequest(data) {
+      return data.keys().hasAll(['uid', 'email', 'status', 'requestDate']) &&
+             data.uid is string &&
+             data.email is string &&
+             data.status in ['Pending', 'Approved', 'Declined'] &&
+             (data.requestDate is timestamp || data.requestDate is string);
+    }
+
+    function isValidInviteCode(data) {
+      return data.keys().hasAll(['code', 'maxLimit', 'usedCount', 'createdAt']) &&
+             data.code is string &&
+             data.maxLimit is int &&
+             data.usedCount is int &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidFeedback(data) {
+      return data.keys().hasAll(['userId', 'userEmail', 'userName', 'workspaceName', 'mode', 'type', 'comment', 'timestamp', 'status', 'rating']) &&
+             data.userId is string &&
+             data.userEmail is string &&
+             data.userName is string &&
+             data.workspaceName is string &&
+             data.mode in ['FEEDBACK', 'MESSAGE'] &&
+             data.type is string &&
+             data.comment is string &&
+             data.status in ['new', 'read', 'archived'] &&
+             (data.timestamp == request.time || data.timestamp is timestamp) &&
+             (data.get('rating', null) == null || data.rating is number);
+    }
+
+      function isValidUserProfile(data) {
+       return (isAdmin() || data.get('uid', '') == request.auth.uid) &&
+              (data.get('workspaceName', null) == null || data.workspaceName is string) &&
+              (data.get('userName', null) == null || data.userName is string) &&
+              (data.get('displayName', null) == null || data.displayName is string) &&
+              (data.get('email', null) == null || data.email is string) &&
+              (data.get('photoURL', null) == null || data.photoURL is string) &&
+              (data.get('onboardingCompleted', true) is bool) &&
+              (data.get('seenPremiumOnboarding', false) is bool) &&
+              (data.get('feedbackPrompted', false) is bool) &&
+              (data.get('driveBackupEnabled', false) is bool) &&
+              (data.get('lastActiveAt', null) == null || data.lastActiveAt is timestamp || data.lastActiveAt is string) &&
+              (data.get('sessions', 0) is number) &&
+              (data.get('milestones', []) is list) &&
+              (data.get('unseenMilestones', []) is list) &&
+              (data.get('lastBackupAt', null) == null || data.lastBackupAt is timestamp) &&
+              (data.get('gstNumber', null) == null || data.gstNumber is string) &&
+              (data.get('studioLogo', null) == null || data.studioLogo is string) &&
+              (data.get('paymentDetails', null) == null || data.paymentDetails is map) &&
+              (data.get('planType', 'free') in ['free', 'premium']) &&
+              (data.get('planExpiry', null) == null || data.planExpiry is string || data.planExpiry is timestamp) &&
+              (data.get('teamOwnerId', null) == null || data.teamOwnerId is string) &&
+              (data.get('role', 'free') in ['free', 'Manager', 'Employee', 'Admin']) &&
+              data.get('createdAt', request.time) is timestamp &&
+              (data.get('updatedAt', null) == null || data.updatedAt is timestamp || data.updatedAt is string);
+     }
+
+    // --- Collections ---
+
+    match /userProfiles/{userId} {
+      allow get: if isOwner(userId) || isAdmin() || isMemberOf(userId);
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) && isValidUserProfile(incoming());
+      allow update: if (isOwner(userId) || isAdmin()) && isValidUserProfile(incoming()) && (
+        isAdmin() || (
+          incoming().get('uid', '') == existing().get('uid', '') &&
+          incoming().get('createdAt', request.time) == existing().get('createdAt', request.time) &&
+          (incoming().get('planType', 'free') == existing().get('planType', 'free') || (existing().get('planType', 'free') == 'free' && incoming().get('planType', 'free') == 'premium')) &&
+          (incoming().get('planExpiry', null) == existing().get('planExpiry', null) || (existing().get('planExpiry', null) == null))
+        )
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /proAccessRequests/{reqId} {
+      allow get: if isOwner(reqId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && isOwner(reqId) && isValidProAccessRequest(incoming()) && incoming().uid == reqId;
+      allow update: if isAdmin() || (isSignedIn() && isOwner(reqId) && isValidProAccessRequest(incoming()) && incoming().uid == reqId && (existing().get('status', 'Pending') == 'Pending'));
+      allow delete: if isAdmin();
+    }
+
+    match /adminLogs/{logId} {
+      allow get, list, create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    match /broadcasts/{bid} {
+      allow get, list, create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    match /inviteCodes/{codeId} {
+      allow get: if isSignedIn();
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+      allow update: if isSignedIn() && isValidInviteCode(incoming()) && (
+         incoming().diff(existing()).affectedKeys().hasOnly(['usedCount']) &&
+         incoming().usedCount == existing().usedCount + 1 &&
+         incoming().usedCount <= existing().maxLimit
+      );
+    }
+
+    match /clients/{clientId} {
+      allow create: if isSignedIn() && isValidId(clientId) && isValidClient(incoming());
+      allow get: if isMemberOf(existing().get('teamOwnerId', existing().get('ownerId', '')));
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.ownerId == request.auth.uid ||
+        resource.data.teamOwnerId == request.auth.uid ||
+        isMemberOf(resource.data.get('teamOwnerId', resource.data.get('ownerId', '')))
+      );
+      allow update: if (isOwner(existing().get('teamOwnerId', existing().get('ownerId', ''))) || isManagerOf(existing().get('teamOwnerId', existing().get('ownerId', ''))) || isAdmin()) && isValidId(clientId) && isValidClient(incoming()) && (
+        isAdmin() || incoming().diff(existing()).affectedKeys().hasOnly(['name', 'email', 'phone', 'company', 'totalUnpaid', 'color', 'teamOwnerId'])
+      );
+      allow delete: if (isOwner(existing().get('teamOwnerId', existing().get('ownerId', ''))) || isManagerOf(existing().get('teamOwnerId', existing().get('ownerId', ''))) || isAdmin()) && isValidId(clientId);
+    }
+
+    match /projects/{projectId} {
+      allow create: if isSignedIn() && isValidId(projectId) && isValidProject(incoming()) && 
+                    exists(/databases/$(database)/documents/clients/$(incoming().clientId));
+      allow get: if isAdmin() ||
+                    isMemberOf(resource.data.get('teamOwnerId', resource.data.get('ownerId', ''))) ||
+                    resource.data.get('assignedTo', '').lower() == getEmail() ||
+                    resource.data.get('assignedTo', '') == request.auth.uid ||
+                    (resource.data.get('publicStatus', '') != '');
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.ownerId == request.auth.uid ||
+        resource.data.teamOwnerId == request.auth.uid ||
+        isMemberOf(resource.data.get('teamOwnerId', resource.data.get('ownerId', ''))) ||
+        resource.data.get('assignedTo', '').lower() == getEmail() ||
+        resource.data.get('assignedTo', '') == request.auth.uid
+      );
+      allow update: if (
+        isAdmin() ||
+        isOwner(existing().get('teamOwnerId', existing().get('ownerId', ''))) || 
+        isManagerOf(existing().get('teamOwnerId', existing().get('ownerId', ''))) ||
+        existing().get('assignedTo', '') == request.auth.uid || 
+        existing().get('assignedTo', '').lower() == getEmail() ||
+        (existing().get('assignedTo', '') == '' && isMemberOf(existing().get('teamOwnerId', existing().get('ownerId', ''))))
+      ) && isValidId(projectId) && (
+        isAdmin() || (isOwner(existing().get('teamOwnerId', existing().get('ownerId', ''))) || isManagerOf(existing().get('teamOwnerId', existing().get('ownerId', '')))) ? (
+          isValidProject(incoming()) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'clientId', 'videoType', 'budget', 'received', 'dueMoney', 'paymentStatus', 'driveLink', 'contact', 'updatedAt', 'quantity', 'pricePerVideo', 'publicStatus', 'startDate', 'endDate', 'dueDate', 'assignedTo', 'assignedByName', 'priority', 'brief', 'fileLinks', 'urgency', 'assignedByEmail', 'assignedByPhoto', 'notes', 'progress', 'teamOwnerId', 'internalNotes'])
+        ) : (
+          incoming().diff(existing()).affectedKeys().hasOnly(['progress', 'updatedAt', 'notes', 'assignedTo', 'assignedToName', 'assignedByName', 'internalNotes']) &&
+          (incoming().diff(existing()).affectedKeys().has('assignedTo') ? 
+            (
+              (existing().get('assignedTo', '') == '' || existing().get('assignedTo', '').lower() == getEmail()) && 
+              incoming().assignedTo == request.auth.uid
+            ) : true
+          ) &&
+          incoming().get('progress', 'Working') in ['Working', 'Done', 'Final', 'Revision'] &&
+          incoming().updatedAt is timestamp
+        )
+      );
+      allow delete: if (isAdmin() || isOwner(existing().ownerId) || isOwner(existing().get('teamOwnerId', '')) || isManagerOf(existing().get('teamOwnerId', ''))) && isValidId(projectId);
+    }
+
+    match /teamMembers/{memberId} {
+      allow get: if isSignedIn() && (resource.data.get('teamOwnerId', '') == request.auth.uid || resource.data.get('ownerId', '') == request.auth.uid || resource.data.memberId == request.auth.uid || resource.data.email == request.auth.token.email || isAdmin());
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.teamOwnerId == request.auth.uid || 
+        resource.data.ownerId == request.auth.uid || 
+        resource.data.memberId == request.auth.uid || 
+        resource.data.email == request.auth.token.email ||
+        isMemberOf(resource.data.get('teamOwnerId', ''))
+      );
+      allow create: if isSignedIn() && (
+        isAdmin() ||
+        (request.auth.uid == incoming().memberId && incoming().teamOwnerId == request.auth.uid) || 
+        (isPremium() && (incoming().teamOwnerId == request.auth.uid || isManagerOf(incoming().teamOwnerId)))
+      ) && isValidTeamMember(incoming());
+      allow update: if isSignedIn() && (isOwner(existing().get('teamOwnerId', '')) || isManagerOf(existing().get('teamOwnerId', '')) || isAdmin());
+      allow delete: if isSignedIn() && (existing().memberId == request.auth.uid || isOwner(existing().get('teamOwnerId', '')) || isManagerOf(existing().get('teamOwnerId', '')) || isAdmin());
+    }
+
+    match /invoices/{invoiceId} {
+      allow get, list: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.ownerId == request.auth.uid || 
+        resource.data.teamOwnerId == request.auth.uid || 
+        isMemberOf(resource.data.get('teamOwnerId', ''))
+      );
+      allow create: if isSignedIn() && isValidInvoice(incoming());
+      allow update: if isSignedIn() && (isAdmin() || (existing().get('teamOwnerId', existing().get('ownerId', '')) == request.auth.uid)) && (
+        isAdmin() || incoming().diff(existing()).affectedKeys().hasOnly(['teamOwnerId', 'status', 'updatedAt'])
+      );
+      allow delete: if isAdmin() || (isSignedIn() && (existing().get('teamOwnerId', existing().get('ownerId', '')) == request.auth.uid));
+    }
+
+    match /invitations/{inviteId} {
+      allow get: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.senderId == request.auth.uid || 
+        resource.data.recipientEmail.lower() == getEmail() || 
+        resource.data.recipientEmail == request.auth.token.email ||
+        isOwner(resource.data.get('teamOwnerId', '')) || 
+        isManagerOf(resource.data.get('teamOwnerId', ''))
+      );
+      allow list: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.senderId == request.auth.uid || 
+        resource.data.recipientEmail.lower() == getEmail() || 
+        resource.data.recipientEmail == request.auth.token.email ||
+        isOwner(resource.data.get('teamOwnerId', '')) || 
+        isManagerOf(resource.data.get('teamOwnerId', ''))
+      );
+      allow create: if isSignedIn() && (isAdmin() || isPremium()) && isValidInvitation(incoming()) && (incoming().teamOwnerId == request.auth.uid || isManagerOf(incoming().teamOwnerId));
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (isOwner(existing().get('teamOwnerId', '')) && incoming().diff(existing()).affectedKeys().hasOnly(['status'])) ||
+        (isManagerOf(existing().get('teamOwnerId', '')) && incoming().diff(existing()).affectedKeys().hasOnly(['status'])) ||
+        (existing().recipientEmail.lower() == getEmail() && incoming().diff(existing()).affectedKeys().hasOnly(['status'])) ||
+        (existing().recipientEmail == request.auth.token.email && incoming().diff(existing()).affectedKeys().hasOnly(['status']))
+      );
+      allow delete: if isSignedIn() && (isAdmin() || existing().senderId == request.auth.uid || isOwner(existing().get('teamOwnerId', '')) || isManagerOf(existing().get('teamOwnerId', '')));
+    }
+
+    match /notifications/{notifId} {
+      allow get, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn(); // System or admin can trigger
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    match /feedbacks/{fId} {
+      allow list: if isAdmin();
+      allow get: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid);
+      allow create: if isSignedIn() && isValidFeedback(incoming()) && incoming().userId == request.auth.uid;
+      allow delete: if isAdmin();
+      allow update: if isAdmin();
+    }
+  }
+}
