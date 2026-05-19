@@ -734,23 +734,33 @@ function AppContent() {
   };
 
   const handleInviteCode = async (code: string) => {
-    if (!user) return;
+    if (!user) {
+      console.error("Premium claim failed: No authenticated user.");
+      return;
+    }
+
+    console.log(`[PREMIUM_CLAIM] Initializing claim for code: ${code}, UID: ${user.uid}`);
+
     if (code === 'WELCOME100') {
       try {
+        // 1. Validate and Increment Invite Code in a single transaction
         const result = await runTransaction(db, async (transaction) => {
           const codeRef = doc(db, 'inviteCodes', 'WELCOME100');
           const codeSnap = await transaction.get(codeRef);
           
           if (!codeSnap.exists()) {
-            throw new Error("Invalid code protocol.");
+            throw new Error("Invalid code protocol: Record missing.");
           }
           
           const codeData = codeSnap.data();
+          console.log(`[PREMIUM_CLAIM] Found code data: limit=${codeData.maxLimit}, used=${codeData.usedCount}`);
+
           if (codeData.usedCount >= codeData.maxLimit) {
+            console.warn(`[PREMIUM_CLAIM] Code capacity exhausted.`);
             return { success: false, exhausted: true };
           }
           
-          const newCount = codeData.usedCount + 1;
+          const newCount = (codeData.usedCount || 0) + 1;
           transaction.update(codeRef, { usedCount: newCount });
           
           const expiryDate = new Date();
@@ -759,33 +769,62 @@ function AppContent() {
           return { success: true, userNumber: newCount, expiry: expiryDate };
         });
 
-        if (result.success && result.expiry && result.userNumber) {
-          localStorage.setItem('premium_user_number', result.userNumber.toString());
-          localStorage.setItem('premium_unlocked_celebration', 'true');
-          localStorage.setItem('premium_expiry_date', result.expiry.toISOString());
+        console.log(`[PREMIUM_CLAIM] Transaction result:`, result);
 
-          if (userProfile) {
-            // Already finished onboarding, update directly
-            await updateDoc(doc(db, 'userProfiles', user.uid), {
-              planType: 'premium',
-              planExpiry: result.expiry.toISOString(),
-              updatedAt: serverTimestamp()
-            });
-            addToast('success', "Pro Protocol Activated. Syncing session...");
-          } else {
-            // Still in onboarding
-            const celebrationText = `Congratulations! You have just unlocked Premium for 100 days.`;
-            setCelebration({ show: true, number: result.userNumber, text: celebrationText, buttonText: "SET UP YOUR STUDIO" });
-            setOnboardingStep('SETUP');
-            localStorage.setItem('pending_premium', JSON.stringify({ planType: 'premium', planExpiry: result.expiry.toISOString() }));
+        if (result.success && result.expiry && result.userNumber) {
+          // DATABASE-FIRST: Perform critical write before any UI state changes
+          try {
+            if (userProfile) {
+              console.log(`[PREMIUM_CLAIM] Upgrading existing profile at userProfiles/${user.uid}`);
+              await updateDoc(doc(db, 'userProfiles', user.uid), {
+                planType: 'premium',
+                planExpiry: result.expiry.toISOString(),
+                updatedAt: serverTimestamp()
+              });
+              
+              console.log(`[PREMIUM_CLAIM] Firestore write confirmed. Proceeding to UI sync.`);
+              
+              // Only after confirmed write:
+              localStorage.setItem('premium_user_number', result.userNumber.toString());
+              localStorage.setItem('premium_unlocked_celebration', 'true');
+              localStorage.setItem('premium_expiry_date', result.expiry.toISOString());
+              
+              addToast('success', "Pro Protocol Activated. Syncing session...");
+              // We refresh via the useEffect that listens to planType or reload
+            } else {
+              console.log(`[PREMIUM_CLAIM] Caching premium info for onboarding setup.`);
+              // User is still in onboarding (no profile doc yet)
+              // We cache this so handleOnboardingComplete can include it
+              localStorage.setItem('pending_premium', JSON.stringify({ 
+                planType: 'premium', 
+                planExpiry: result.expiry.toISOString(),
+                userNumber: result.userNumber
+              }));
+
+              // UI changes only on success
+              const celebrationText = `Congratulations! You have just unlocked Premium for 100 days.`;
+              setCelebration({ 
+                show: true, 
+                number: result.userNumber, 
+                text: celebrationText, 
+                buttonText: "SET UP YOUR STUDIO" 
+              });
+              setOnboardingStep('SETUP');
+            }
+          } catch (dbError) {
+            console.error(`[PREMIUM_CLAIM] CRITICAL: Firestore profile update failed!`, dbError);
+            addToast('error', "Database synchronization failed. Please try again or contact support.");
+            // UI does NOT show success because we didn't hit those lines
           }
         } else if (result.exhausted) {
           setProRequestModal(true);
         }
       } catch (err: any) {
+        console.error(`[PREMIUM_CLAIM] Invite code validation failed:`, err);
         handleFirestoreError(err, OperationType.WRITE, 'inviteCodes/WELCOME100');
       }
     } else {
+      console.warn(`[PREMIUM_CLAIM] Invalid code entered: ${code}`);
       addToast('error', "Invalid invite code.");
     }
   };
