@@ -51,6 +51,14 @@ export default function QuickAddProject({ isOpen, userProfile, onClose, onSucces
     }
   }, [formData.clientId, clients]);
 
+  // Auto-calculate budget
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      budget: prev.quantity * prev.pricePerVideo
+    }));
+  }, [formData.quantity, formData.pricePerVideo]);
+
   useEffect(() => {
     if (!auth.currentUser || !isOpen) return;
 

@@ -232,7 +232,7 @@ service cloud.firestore {
         isMemberOf(resource.data.get('teamOwnerId', resource.data.get('ownerId', '')))
       );
       allow update: if (isOwner(existing().get('teamOwnerId', existing().get('ownerId', ''))) || isManagerOf(existing().get('teamOwnerId', existing().get('ownerId', ''))) || isAdmin()) && isValidId(clientId) && isValidClient(incoming()) && (
-        isAdmin() || incoming().diff(existing()).affectedKeys().hasOnly(['name', 'email', 'phone', 'company', 'totalUnpaid', 'color', 'teamOwnerId'])
+        isAdmin() || incoming().diff(existing()).affectedKeys().hasOnly(['name', 'email', 'phone', 'company', 'totalUnpaid', 'color', 'teamOwnerId', 'updatedAt'])
       );
       allow delete: if (isOwner(existing().get('teamOwnerId', existing().get('ownerId', ''))) || isManagerOf(existing().get('teamOwnerId', existing().get('ownerId', ''))) || isAdmin()) && isValidId(clientId);
     }

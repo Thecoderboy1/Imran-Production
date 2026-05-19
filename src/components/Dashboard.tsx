@@ -148,8 +148,11 @@ export default function Dashboard({ userProfile, setActiveTab }: { userProfile?:
           }
         }
         localStorage.setItem(migratedKey, 'true');
-      } catch (e) {
-        console.error("[Migration] failed:", e);
+      } catch (e: any) {
+        console.error("[Migration] failed. Permissions or Index error likely.", e);
+        if (e.code === 'permission-denied') {
+          console.error("[Migration] Permission Denied. Check firestore.rules for clients/projects/invoices update permissions.");
+        }
       }
     };
 
