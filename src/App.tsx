@@ -107,11 +107,11 @@ function AuthScreen({ onGoogleLogin }: { onGoogleLogin: () => void }) {
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             className="absolute inset-0 bg-brand-500 blur-2xl rounded-full" 
           />
-          <span className="text-[#0D1117] font-black text-2xl relative z-10 tracking-widest">IM</span>
+          <span className="text-[#0D1117] font-black text-2xl relative z-10 tracking-widest">FS</span>
         </div>
         
-        <h1 className="text-3xl font-black text-white mb-2 tracking-widest">Imran Production</h1>
-        <p className="text-slate-500 mb-12 font-bold italic text-xs tracking-[0.2em]">High fidelity studio hub</p>
+        <h1 className="text-3xl font-black text-white mb-2 tracking-widest">FrameStack</h1>
+        <p className="text-slate-500 mb-12 font-bold italic text-xs tracking-[0.2em]">High fidelity production Hub</p>
 
         <button 
           onClick={onGoogleLogin}
@@ -565,7 +565,7 @@ function AppContent() {
 
   // Sync theme with system or state
   useEffect(() => {
-    document.title = 'Imran Production | Executive Pipeline';
+    document.title = 'FrameStack | Executive Pipeline';
     if (darkMode) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('darkMode', 'true');
@@ -866,11 +866,11 @@ function AppContent() {
                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                className="absolute inset-0 bg-brand-500 blur-lg rounded-full" 
              />
-             <span className="text-[#0D1117] font-black text-[10px] relative z-10 tracking-widest">IM</span>
+             <span className="text-[#0D1117] font-black text-[10px] relative z-10 tracking-widest">FS</span>
           </div>
           <div className="min-w-0 text-left">
             <span className="font-black text-sm text-white tracking-tight block truncate leading-none">
-              {userProfile?.workspaceName || 'Imran Production'}
+              FrameStack
             </span>
           </div>
         </div>
@@ -960,11 +960,11 @@ function AppContent() {
                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                className="absolute inset-0 bg-brand-500 blur-lg rounded-full" 
              />
-             <span className="text-[#0D1117] font-black text-[10px] relative z-10 tracking-widest">IM</span>
+             <span className="text-[#0D1117] font-black text-[10px] relative z-10 tracking-widest">FS</span>
           </div>
           <div className="min-w-0">
-            <span className="font-black text-xs text-white leading-none block truncate tracking-tight" title={userProfile?.workspaceName || 'Imran Production'}>
-              {userProfile?.workspaceName || 'Imran Production'}
+            <span className="font-black text-xs text-white leading-none block truncate tracking-tight" title="FrameStack">
+              FrameStack
             </span>
             <span className="text-[7px] font-bold text-brand-500 tracking-widest mt-1 block">
               Control Center
@@ -1028,7 +1028,13 @@ function AppContent() {
                    )}
                 </div>
                 <div className="min-w-0">
-                   <p className="text-[10px] font-black text-white truncate">{userProfile?.professionalName || 'Member'}</p>
+                    <p className="text-[10px] font-black text-white truncate">
+                      {userProfile?.professionalName?.trim().split(/\s+/)[0] || 
+                       userProfile?.displayName?.trim().split(/\s+/)[0] || 
+                       user.displayName?.trim().split(/\s+/)[0] || 
+                       user.email?.split('@')[0] || 
+                       'Member'}
+                    </p>
                    <p className="text-[8px] text-slate-500 truncate">{user.email}</p>
                 </div>
              </div>

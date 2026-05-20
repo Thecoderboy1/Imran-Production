@@ -41,14 +41,14 @@ async function startServer() {
         let html = "";
 
         if (type === 'invite') {
-          subject = `Join ${workspaceName} on Imran Production`;
+          subject = `Join ${workspaceName} on FrameStack`;
           const appUrl = process.env.SHARED_APP_URL || "https://ais-pre-iapjyqzmzgu555nh34hooa-873882748937.asia-southeast1.run.app";
           html = `
             <div style="font-family: sans-serif; padding: 40px; color: #1e293b; background: #f1f5f9;">
               <div style="max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
                 <h1 style="color: #6366f1; margin-bottom: 24px; font-size: 24px;">Team Invitation</h1>
                 <p style="font-size: 16px; line-height: 1.6;">Hi <strong>${name || 'there'}</strong>,</p>
-                <p style="font-size: 16px; line-height: 1.6;"><strong>${senderName || 'The Producer'}</strong> has invited you to join their production team <strong>${workspaceName || 'Imran Production'}</strong> as a <strong>${role || 'Team Member'}</strong>.</p>
+                <p style="font-size: 16px; line-height: 1.6;"><strong>${senderName || 'The Producer'}</strong> has invited you to join their production team <strong>${workspaceName || 'FrameStack'}</strong> as a <strong>${role || 'Team Member'}</strong>.</p>
                 <div style="margin: 32px 0;">
                   <a href="${appUrl}" style="background: #6366f1; color: white; padding: 16px 32px; border-radius: 12px; font-weight: bold; text-decoration: none; display: inline-block;">Join Production Team</a>
                 </div>
@@ -69,7 +69,7 @@ async function startServer() {
                 <p style="font-size: 16px; line-height: 1.6;">You have been assigned a new project: <strong>${projectName || 'Untitled'}</strong> by <strong>${senderName || 'Management'}</strong>.</p>
                 <p style="font-size: 16px; line-height: 1.6;">Please log in to your dashboard to view the details and start working.</p>
                 <div style="margin-top: 32px; padding: 24px; background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0;">
-                  <p style="margin: 0; font-size: 14px; color: #64748b;">Workspace: ${workspaceName || 'Imran Production'}</p>
+                  <p style="margin: 0; font-size: 14px; color: #64748b;">Workspace: ${workspaceName || 'FrameStack'}</p>
                 </div>
               </div>
             </div>
@@ -83,7 +83,7 @@ async function startServer() {
         }
 
         const fromEmail = (process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev').trim();
-        const fromName = process.env.RESEND_FROM_NAME || 'Imran Production';
+        const fromName = process.env.RESEND_FROM_NAME || 'FrameStack';
         
         // Resend trial accounts require exact 'onboarding@resend.dev' as sender
         const finalFrom = fromEmail === 'onboarding@resend.dev' 

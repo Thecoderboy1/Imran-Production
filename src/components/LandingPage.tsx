@@ -43,9 +43,9 @@ export default function LandingPage({ onGetStarted }: { onGetStarted: () => void
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                 className="absolute inset-0 bg-brand-500 blur-xl rounded-full" 
               />
-              <span className="text-[#0D1117] font-black text-sm relative z-10 tracking-widest">IM</span>
+              <span className="text-[#0D1117] font-black text-sm relative z-10 tracking-widest">FS</span>
            </div>
-           <span className="font-black text-xl text-white tracking-tighter whitespace-nowrap">Imran Studio</span>
+           <span className="font-black text-xl text-white tracking-tighter whitespace-nowrap">FrameStack</span>
         </div>
         <button 
           onClick={onGetStarted}
@@ -142,7 +142,7 @@ export default function LandingPage({ onGetStarted }: { onGetStarted: () => void
 
       {/* Footer Minimal */}
       <footer className="absolute bottom-8 left-8 right-8 flex items-center justify-between opacity-30">
-        <p className="text-[8px] font-black tracking-wider text-slate-500">© 2026 Imran Studio protocols</p>
+        <p className="text-[8px] font-black tracking-wider text-slate-500">© 2026 FrameStack protocols</p>
         <div className="flex gap-8">
            <span className="text-[8px] font-black tracking-wider text-slate-500">Satellite_Active</span>
            <span className="text-[8px] font-black tracking-wider text-slate-500">V4.02.0</span>

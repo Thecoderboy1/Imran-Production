@@ -41,9 +41,9 @@ export default function InvoiceGenerator({ userProfile }: { userProfile?: any })
   const [dueDate, setDueDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [nextInvoiceNumber, setNextInvoiceNumber] = useState('INV-001');
 
-  // Imran's fixed details for invoice
+  // FrameStack's fixed details for invoice
   const [vendorDetails, setVendorDetails] = useState({
-    name: "Imran Production",
+    name: "FrameStack",
     userName: "",
     bankName: "",
     accountNumber: "",
@@ -334,7 +334,7 @@ export default function InvoiceGenerator({ userProfile }: { userProfile?: any })
     
     const projectList = unpaidProjects.map(p => `- ${p.name}: ${formatCurrency(p.dueMoney)}`).join('\n');
     const totalAmount = formatCurrency(totalDue);
-    const studioName = vendorDetails.name || 'Imran Production';
+    const studioName = vendorDetails.name || 'FrameStack';
     const profName = vendorDetails.userName || 'Producer';
     
     const message = `Hi ${selectedClient.name}, hope you're doing well. This is a reminder from ${studioName} regarding the following pending settlements:

@@ -379,7 +379,7 @@ export default function Dashboard({ userProfile, setActiveTab }: { userProfile?:
 
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-4">
         <div>
-          <h1 className="page-title">{userProfile?.workspaceName || 'Overview'}</h1>
+          <h1 className="page-title">Overview</h1>
           <p className="page-subtitle">Your studio's financial and production overview for today</p>
         </div>
         <div className="flex items-center gap-2">

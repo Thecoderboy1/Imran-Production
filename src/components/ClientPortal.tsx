@@ -196,7 +196,7 @@ export default function ClientPortal({ portalToken }: { portalToken: string }) {
         </div>
 
         <footer className="mt-32 text-center">
-           <p className="text-[10px] font-black text-slate-800 tracking-widest mb-10">Secured Architecture by Operative Imran</p>
+           <p className="text-[10px] font-black text-slate-800 tracking-widest mb-10">Secured Architecture by FrameStack</p>
            <div className="flex items-center justify-center gap-10 opacity-10 grayscale">
               <Video size={24} />
               <Shield size={24} />
