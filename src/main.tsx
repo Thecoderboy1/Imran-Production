@@ -102,7 +102,7 @@ class ErrorBoundary extends React.Component<Props, State> {
             </div>
             
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-12 opacity-50 italic">
-               FrameStack &copy; 2026 Executive Infrastructure
+               FrameTrack &copy; 2026 Executive Infrastructure
             </p>
           </motion.div>
         </div>

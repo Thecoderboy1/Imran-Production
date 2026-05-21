@@ -686,7 +686,7 @@ export default function MilestoneSystem({ userProfile, projects, clients, invoic
           className="w-[1080px] h-[1920px] p-20 flex flex-col items-center justify-between text-center"
          >
             <div className="pt-20">
-               <p style={{ color: '#0F9D58' }} className="text-4xl font-black uppercase tracking-[0.5em] mb-4">FrameStack</p>
+               <p style={{ color: '#0F9D58' }} className="text-4xl font-black uppercase tracking-[0.5em] mb-4">FrameTrack</p>
                <div style={{ backgroundColor: '#0F9D58' }} className="w-24 h-1 mx-auto rounded-full" />
             </div>
 
