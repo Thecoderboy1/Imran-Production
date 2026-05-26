@@ -500,7 +500,13 @@ export default function ProjectTracker({ userProfile }: { userProfile?: any }) {
                              "bg-amber-500/10 text-amber-500 border-amber-500/20"
                            )}>
                               {p.videoType || 'Short Form'}
-                           </div>
+                            </div>
+                            {p.startDate && p.startDate.toDate && (
+                              <div className="flex items-center gap-1 text-[8px] font-black text-slate-400 dark:text-slate-500 tracking-widest mt-1">
+                                <Calendar size={10} className="text-slate-400 dark:text-slate-500 shrink-0" /> {format(p.startDate.toDate(), 'dd MMM')}
+                              </div>
+                            )}
+                           
                            {p.dueDate && p.dueDate.toDate && (
                              <div className={cn(
                                "flex items-center gap-1 text-[8px] font-black tracking-widest",

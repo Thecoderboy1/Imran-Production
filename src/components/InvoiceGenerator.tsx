@@ -605,7 +605,7 @@ Please let us know once the payment is processed. Thank you for your continued p
                             <div className="min-w-0">
                               <p className="font-black text-white text-base tracking-tight leading-tight group-hover:text-brand-500 transition-colors truncate max-w-[200px] md:max-w-md">{project.name}</p>
                               <p className="text-[10px] font-black text-slate-600 tracking-[0.2em] mt-2 italic">
-                                Organized {project.createdAt ? format(project.createdAt.toDate(), 'do MMM yy') : 'Recently'}
+                                Organized {(project.startDate?.toDate || project.createdAt?.toDate) ? format((project.startDate?.toDate ? project.startDate.toDate() : project.createdAt.toDate()), 'do MMM yy') : 'Recently'}
                               </p>
                             </div>
                           </div>

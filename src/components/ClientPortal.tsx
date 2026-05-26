@@ -121,7 +121,7 @@ export default function ClientPortal({ portalToken }: { portalToken: string }) {
               <Calendar size={56} className="text-white shrink-0 opacity-20" />
               <div>
                 <h3 className="text-4xl font-black text-white tracking-tighter leading-none mb-2">
-                  {project.endDate?.toDate ? format(project.endDate.toDate(), 'MMM d, yyyy') : 'TBD'}
+                  {(project.dueDate?.toDate || project.endDate?.toDate) ? format((project.dueDate?.toDate ? project.dueDate.toDate() : project.endDate?.toDate()), 'MMM d, yyyy') : 'TBD'}
                 </h3>
                 <p className="text-slate-600 font-black text-[10px] tracking-widest leading-none">
                   Target Delivery Date
@@ -188,7 +188,7 @@ export default function ClientPortal({ portalToken }: { portalToken: string }) {
                       Project baseline established. Master assets ingested and verified for production compatibility.
                     </p>
                     <p className="text-[10px] font-black text-slate-800 tracking-widest mt-6 bg-white/5 py-2 px-4 rounded-lg w-fit border border-white/[0.03]">
-                      Archive Date: {project.createdAt?.toDate ? format(project.createdAt.toDate(), 'MMM d, yyyy') : 'Live Sync'}
+                      Start Date: {(project.startDate?.toDate || project.createdAt?.toDate) ? format((project.startDate?.toDate ? project.startDate.toDate() : project.createdAt.toDate()), 'MMM d, yyyy') : 'Live Sync'}
                     </p>
                  </div>
               </div>
