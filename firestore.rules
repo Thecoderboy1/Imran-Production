@@ -84,7 +84,8 @@ service cloud.firestore {
              data.name is string &&
              data.clientId is string &&
              data.budget is number &&
-             isValidId(data.ownerId);
+             isValidId(data.ownerId) &&
+             (data.get('duration', null) == null || (data.duration is string && data.duration.size() <= 100));
     }
 
     function isValidTeamMember(data) {
@@ -265,7 +266,7 @@ service cloud.firestore {
       ) && isValidId(projectId) && (
         isAdmin() || (isOwner(existing().get('teamOwnerId', existing().get('ownerId', ''))) || isManagerOf(existing().get('teamOwnerId', existing().get('ownerId', '')))) ? (
           isValidProject(incoming()) &&
-          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'clientId', 'videoType', 'budget', 'received', 'dueMoney', 'paymentStatus', 'driveLink', 'contact', 'updatedAt', 'quantity', 'pricePerVideo', 'publicStatus', 'startDate', 'endDate', 'dueDate', 'assignedTo', 'assignedByName', 'priority', 'brief', 'fileLinks', 'urgency', 'assignedByEmail', 'assignedByPhoto', 'notes', 'progress', 'teamOwnerId', 'internalNotes'])
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'clientId', 'videoType', 'budget', 'received', 'dueMoney', 'paymentStatus', 'driveLink', 'contact', 'updatedAt', 'quantity', 'pricePerVideo', 'publicStatus', 'startDate', 'endDate', 'dueDate', 'assignedTo', 'assignedByName', 'priority', 'brief', 'fileLinks', 'urgency', 'assignedByEmail', 'assignedByPhoto', 'notes', 'progress', 'teamOwnerId', 'internalNotes', 'duration'])
         ) : (
           incoming().diff(existing()).affectedKeys().hasOnly(['progress', 'updatedAt', 'notes', 'assignedTo', 'assignedToName', 'assignedByName', 'internalNotes']) &&
           (incoming().diff(existing()).affectedKeys().has('assignedTo') ? 

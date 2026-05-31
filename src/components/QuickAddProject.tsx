@@ -38,7 +38,8 @@ export default function QuickAddProject({ isOpen, userProfile, onClose, onSucces
     publicStatus: 'In Queue',
     revisions: 0,
     startDate: '',
-    dueDate: ''
+    dueDate: '',
+    duration: ''
   });
 
   // Auto-fill contact info when client is selected
@@ -55,7 +56,7 @@ export default function QuickAddProject({ isOpen, userProfile, onClose, onSucces
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
-      budget: prev.quantity * prev.pricePerVideo
+      budget: (parseFloat(prev.quantity as any) || 0) * (Number(prev.pricePerVideo) || 0)
     }));
   }, [formData.quantity, formData.pricePerVideo]);
 
@@ -94,6 +95,7 @@ export default function QuickAddProject({ isOpen, userProfile, onClose, onSucces
 
       const projectData: any = {
         ...formData,
+        quantity: parseFloat(formData.quantity as any) || 0,
         budget,
         received,
         dueMoney,
@@ -124,7 +126,8 @@ export default function QuickAddProject({ isOpen, userProfile, onClose, onSucces
         publicStatus: 'In Queue',
         revisions: 0,
         startDate: '',
-        dueDate: ''
+        dueDate: '',
+        duration: ''
       });
       onSuccess();
     } catch (error) {
@@ -224,6 +227,21 @@ export default function QuickAddProject({ isOpen, userProfile, onClose, onSucces
                    ))}
                  </div>
                </div>
+
+               {formData.videoType === 'Long Form' && (
+                 <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                   <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">
+                     Duration (Optional hh:mm:ss)
+                   </label>
+                   <input
+                     type="text"
+                     placeholder="e.g. 00:45:00"
+                     className="w-full bg-slate-100 dark:bg-white/5 dark:text-white border border-transparent rounded px-3 py-1.5 focus:ring-2 focus:ring-brand-500/50 outline-none font-bold text-xs"
+                     value={formData.duration || ''}
+                     onChange={e => setFormData({...formData, duration: e.target.value})}
+                   />
+                 </div>
+               )}
             </div>
           </div>
 
@@ -262,7 +280,7 @@ export default function QuickAddProject({ isOpen, userProfile, onClose, onSucces
                   <div className="grid grid-cols-2 gap-3">
                      <div>
                         <label className="block text-[7px] font-black text-slate-400 uppercase mb-1 pl-1">Quantity</label>
-                        <input type="number" min="1" className="w-full bg-white dark:bg-slate-900 border-none rounded px-2 py-1.5 font-black text-xs" value={formData.quantity} onChange={e => setFormData({...formData, quantity: Math.max(1, Number(e.target.value))})} />
+                        <input type="number" step="any" min="0" className="w-full bg-white dark:bg-slate-900 border-none rounded px-2 py-1.5 font-black text-xs" value={formData.quantity} onChange={e => setFormData({...formData, quantity: e.target.value as any})} />
                      </div>
                      <div>
                         <label className="block text-[7px] font-black text-slate-400 uppercase mb-1 pl-1">Project Price</label>

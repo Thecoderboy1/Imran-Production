@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, getDoc, doc, writeBatch, Timestamp, serverTimestamp, addDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDoc, doc, writeBatch, Timestamp, serverTimestamp, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/firebaseUtils';
 import { formatCurrency, cn, isGrandfathered } from '../lib/utils';
@@ -18,7 +18,8 @@ import {
   Mail,
   Send,
   Zap,
-  Shield
+  Shield,
+  Trash2
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, isAfter } from 'date-fns';
 import { jsPDF } from 'jspdf';
@@ -40,6 +41,7 @@ export default function InvoiceGenerator({ userProfile }: { userProfile?: any })
   const [invoiceDate, setInvoiceDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [dueDate, setDueDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [nextInvoiceNumber, setNextInvoiceNumber] = useState('INV-001');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // FrameTrack's fixed details for invoice
   const [vendorDetails, setVendorDetails] = useState({
@@ -270,44 +272,115 @@ export default function InvoiceGenerator({ userProfile }: { userProfile?: any })
     if (selectedClient.company) doc.text(selectedClient.company, 20, 82);
     if (selectedClient.email) doc.text(selectedClient.email, 20, 88);
 
-    // Table
-    const tableData = unpaidProjects.map(p => [
-      p.name,
-      p.videoType,
-      formatCurrency(p.dueMoney).replace('₹', 'Rs.')
-    ]);
+    // Table grouped into Short Form first and Long Form second
+    const shortForm = unpaidProjects.filter(p => !p.videoType || p.videoType === 'Short Form');
+    const longForm = unpaidProjects.filter(p => p.videoType === 'Long Form');
+    let currentTableY = 100;
 
-    autoTable(doc, {
-      startY: 100,
-      head: [['DESCRIPTION', 'CATEGORY', 'AMOUNT']],
-      body: tableData,
-      theme: 'grid',
-      headStyles: { fillColor: [15, 23, 42] as any, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
-      bodyStyles: { fontSize: 9, cellPadding: 6 },
-      margin: { left: 20, right: 20 }
-    });
+    if (shortForm.length > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(15, 23, 42);
+      doc.text("SHORT FORM VIDEOS", 20, currentTableY);
+      currentTableY += 5;
+
+      const shortTableData = shortForm.map(p => {
+        const dueStr = p.dueDate ? (p.dueDate.toDate ? format(p.dueDate.toDate(), 'dd MMM yyyy') : format(new Date(p.dueDate), 'dd MMM yyyy')) : '-';
+        return [
+          p.name,
+          dueStr,
+          formatCurrency(p.dueMoney).replace('₹', 'Rs.')
+        ];
+      });
+
+      autoTable(doc, {
+        startY: currentTableY,
+        head: [['DESCRIPTION', 'DUE DATE', 'AMOUNT']],
+        body: shortTableData,
+        theme: 'grid',
+        headStyles: { fillColor: [15, 23, 42] as any, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { fontSize: 9, cellPadding: 6 },
+        margin: { left: 20, right: 20 }
+      });
+
+      currentTableY = (doc as any).lastAutoTable.finalY + 12;
+    }
+
+    if (longForm.length > 0) {
+      const pageHeight = doc.internal.pageSize.getHeight();
+      if (currentTableY + 25 > pageHeight - 15) {
+        doc.addPage();
+        currentTableY = 25;
+      }
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(15, 23, 42);
+      doc.text("LONG FORM VIDEOS", 20, currentTableY);
+      currentTableY += 5;
+
+      const longTableData = longForm.map(p => {
+        const dueStr = p.dueDate ? (p.dueDate.toDate ? format(p.dueDate.toDate(), 'dd MMM yyyy') : format(new Date(p.dueDate), 'dd MMM yyyy')) : '-';
+        const durationStr = p.duration || '-';
+        return [
+          p.name,
+          durationStr,
+          dueStr,
+          formatCurrency(p.dueMoney).replace('₹', 'Rs.')
+        ];
+      });
+
+      autoTable(doc, {
+        startY: currentTableY,
+        head: [['DESCRIPTION', 'DURATION', 'DUE DATE', 'AMOUNT']],
+        body: longTableData,
+        theme: 'grid',
+        headStyles: { fillColor: [15, 23, 42] as any, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { fontSize: 9, cellPadding: 6 },
+        margin: { left: 20, right: 20 }
+      });
+
+      currentTableY = (doc as any).lastAutoTable.finalY + 12;
+    }
 
     // Totals
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    let currentY = currentTableY;
+    const pageHeight = doc.internal.pageSize.getHeight();
+    
+    // Check if totals block (needs roughly 30 units) fits, otherwise add a page.
+    if (currentY + 30 > pageHeight - 15) {
+      doc.addPage();
+      currentY = 25;
+    }
+
     doc.setFontSize(10);
     doc.setTextColor(15, 23, 42);
-    doc.text(`SUBTOTAL:`, pageWidth - 80, finalY);
-    doc.text(formatCurrency(subtotal).replace('₹', 'Rs.'), pageWidth - 20, finalY, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.text(`SUBTOTAL:`, pageWidth - 80, currentY);
+    doc.text(formatCurrency(subtotal).replace('₹', 'Rs.'), pageWidth - 20, currentY, { align: 'right' });
     
+    let totalBlockOffset = 8;
     if (gstEnabled) {
-      doc.text(`GST (${gstPercentage}%):`, pageWidth - 80, finalY + 8);
-      doc.text(formatCurrency(gstAmount).replace('₹', 'Rs.'), pageWidth - 20, finalY + 8, { align: 'right' });
+      doc.text(`GST (${gstPercentage}%):`, pageWidth - 80, currentY + 8);
+      doc.text(formatCurrency(gstAmount).replace('₹', 'Rs.'), pageWidth - 20, currentY + 8, { align: 'right' });
+      totalBlockOffset = 16;
     }
 
     doc.setFillColor(15, 23, 42);
-    doc.rect(pageWidth - 90, finalY + 14, 70, 12, 'F');
+    doc.rect(pageWidth - 90, currentY + totalBlockOffset, 70, 12, 'F');
     doc.setTextColor(255);
     doc.setFont('helvetica', 'bold');
-    doc.text(`TOTAL DUE:`, pageWidth - 80, finalY + 22);
-    doc.text(formatCurrency(finalTotal).replace('₹', 'Rs.'), pageWidth - 25, finalY + 22, { align: 'right' });
+    doc.text(`TOTAL DUE:`, pageWidth - 80, currentY + totalBlockOffset + 8);
+    doc.text(formatCurrency(finalTotal).replace('₹', 'Rs.'), pageWidth - 25, currentY + totalBlockOffset + 8, { align: 'right' });
 
     // Settlement
-    const settY = finalY + 50;
+    // Check if settlement details block (needs roughly 45 units) fits, otherwise add page.
+    let settY = currentY + totalBlockOffset + 25;
+    if (settY + 45 > pageHeight - 15) {
+      doc.addPage();
+      settY = 25;
+    }
+
     doc.setFontSize(9);
     doc.setTextColor(15, 23, 42);
     doc.setFont('helvetica', 'bold');
@@ -332,7 +405,7 @@ export default function InvoiceGenerator({ userProfile }: { userProfile?: any })
   const generateReminderMessage = (type: 'whatsapp' | 'email') => {
     if (!selectedClient || unpaidProjects.length === 0) return "";
     
-    const projectList = unpaidProjects.map(p => `- ${p.name}: ${formatCurrency(p.dueMoney)}`).join('\n');
+    const projectList = unpaidProjects.map(p => `- ${p.name}${p.duration ? ` (Duration: ${p.duration})` : ''}: ${formatCurrency(p.dueMoney)}`).join('\n');
     const totalAmount = formatCurrency(totalDue);
     const studioName = vendorDetails.name || 'FrameTrack';
     const profName = vendorDetails.userName || 'Producer';
@@ -431,25 +504,59 @@ Please let us know once the payment is processed. Thank you for your continued p
                        </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                       <div className="flex justify-end gap-2">
-                         {inv.status !== 'Paid' && (
+                       <div className="flex justify-end gap-2 items-center">
+                         {deletingId === inv.id ? (
+                           <div className="flex items-center gap-1.5">
+                             <button 
+                               onClick={async () => {
+                                 try {
+                                   await deleteDoc(doc(db, 'invoices', inv.id));
+                                 } catch (error) {
+                                   handleFirestoreError(error, OperationType.WRITE, `invoices/${inv.id}`);
+                                 } finally {
+                                   setDeletingId(null);
+                                 }
+                               }}
+                               className="h-8 px-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-black text-[8px] tracking-widest transition-all uppercase"
+                             >
+                               Confirm
+                             </button>
+                             <button 
+                               onClick={() => setDeletingId(null)}
+                               className="h-8 px-2.5 bg-white/10 hover:bg-white/15 text-slate-400 hover:text-white rounded-lg font-black text-[8px] tracking-widest transition-all uppercase"
+                             >
+                               Cancel
+                             </button>
+                           </div>
+                         ) : (
                            <>
-                             {isPremium ? (
+                             {inv.status !== 'Paid' && (
                                <>
-                                 <button 
-                                   onClick={() => updateDoc(doc(db, 'invoices', inv.id), { status: 'Sent' })}
-                                   className="h-8 px-4 bg-white/5 text-slate-400 rounded-lg hover:text-brand-500 hover:bg-brand-500/10 border border-white/10 transition-all font-black text-[9px] tracking-widest"
-                                 > Sent </button>
-                                 <button 
-                                   onClick={() => handleMarkAsPaid(inv)}
-                                   className="h-8 px-4 bg-emerald-500 text-[#0D1117] rounded-lg font-black text-[9px] tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-emerald-500/10"
-                                 > Paid </button>
+                                 {isPremium ? (
+                                   <>
+                                     <button 
+                                       onClick={() => updateDoc(doc(db, 'invoices', inv.id), { status: 'Sent' })}
+                                       className="h-8 px-4 bg-white/5 text-slate-400 rounded-lg hover:text-brand-500 hover:bg-brand-500/10 border border-white/10 transition-all font-black text-[9px] tracking-widest"
+                                     > Sent </button>
+                                     <button 
+                                       onClick={() => handleMarkAsPaid(inv)}
+                                       className="h-8 px-4 bg-emerald-500 text-[#0D1117] rounded-lg font-black text-[9px] tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-emerald-500/10"
+                                     > Paid </button>
+                                   </>
+                                 ) : (
+                                   <div onClick={() => window.location.href = PREMIUM_UPGRADE_URL} className="cursor-pointer">
+                                     <ProTooltip label="Auto Sync" />
+                                   </div>
+                                 )}
                                </>
-                             ) : (
-                               <div onClick={() => window.location.href = PREMIUM_UPGRADE_URL} className="cursor-pointer">
-                                 <ProTooltip label="Auto Sync" />
-                               </div>
                              )}
+                             <button
+                               title="Delete Invoice"
+                               onClick={() => setDeletingId(inv.id)}
+                               className="w-8 h-8 flex items-center justify-center bg-white/5 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg border border-white/5 hover:border-red-500/20 transition-all"
+                             >
+                               <Trash2 size={13} />
+                             </button>
                            </>
                          )}
                        </div>
@@ -603,9 +710,17 @@ Please let us know once the payment is processed. Thank you for your continued p
                                <CheckCircle size={24} strokeWidth={2.5} />
                             </div>
                             <div className="min-w-0">
-                              <p className="font-black text-white text-base tracking-tight leading-tight group-hover:text-brand-500 transition-colors truncate max-w-[200px] md:max-w-md">{project.name}</p>
-                              <p className="text-[10px] font-black text-slate-600 tracking-[0.2em] mt-2 italic">
-                                Organized {(project.startDate?.toDate || project.createdAt?.toDate) ? format((project.startDate?.toDate ? project.startDate.toDate() : project.createdAt.toDate()), 'do MMM yy') : 'Recently'}
+                              <p className="font-black text-white text-base tracking-tight leading-tight group-hover:text-brand-500 transition-colors truncate max-w-[200px] md:max-w-md">
+                                {project.name}{project.duration ? ` (${project.duration})` : ''}
+                              </p>
+                              <p className="text-[10px] font-black text-slate-600 tracking-[0.2em] mt-2 italic flex flex-wrap gap-x-2">
+                                <span>Organized {(project.startDate?.toDate || project.createdAt?.toDate) ? format((project.startDate?.toDate ? project.startDate.toDate() : project.createdAt.toDate()), 'do MMM yy') : 'Recently'}</span>
+                                {project.dueDate && (
+                                  <>
+                                    <span className="text-slate-500">•</span>
+                                    <span className="text-brand-500">Due: {project.dueDate.toDate ? format(project.dueDate.toDate(), 'do MMM yy') : format(new Date(project.dueDate), 'do MMM yy')}</span>
+                                  </>
+                                )}
                               </p>
                             </div>
                           </div>

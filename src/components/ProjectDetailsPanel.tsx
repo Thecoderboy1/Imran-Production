@@ -19,6 +19,18 @@ export default function ProjectDetailsPanel({ project: initialProject, isOpen, o
   const [internalNotes, setInternalNotes] = useState(initialProject?.internalNotes || '');
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSavingInternal, setIsSavingInternal] = useState(false);
+  const [videoType, setVideoType] = useState(initialProject?.videoType || 'Short Form');
+  const [quantity, setQuantity] = useState<number | string>(initialProject?.quantity ?? 1);
+  const [duration, setDuration] = useState(initialProject?.duration || '');
+  const [isUpdatingParams, setIsUpdatingParams] = useState(false);
+
+  useEffect(() => {
+    if (initialProject) {
+      setVideoType(initialProject.videoType || 'Short Form');
+      setQuantity(initialProject.quantity ?? 1);
+      setDuration(initialProject.duration || '');
+    }
+  }, [initialProject?.id]);
 
   useEffect(() => {
     if (!initialProject?.id || !isOpen) return;
@@ -30,6 +42,9 @@ export default function ProjectDetailsPanel({ project: initialProject, isOpen, o
         const data = document.data();
         setProject((prev: any) => ({ ...prev, ...data, id: document.id }));
         setInternalNotes(data.internalNotes || '');
+        setVideoType(data.videoType || 'Short Form');
+        setQuantity(data.quantity ?? 1);
+        setDuration(data.duration || '');
       }
     }, (error) => {
       console.debug("Project panel listener error:", error);
@@ -37,6 +52,45 @@ export default function ProjectDetailsPanel({ project: initialProject, isOpen, o
 
     return () => unsub();
   }, [initialProject?.id, isOpen]);
+
+  const handleUpdateDuration = async (newDuration: string) => {
+    setIsUpdatingParams(true);
+    try {
+      await updateDoc(doc(db, 'projects', project.id), {
+        duration: newDuration,
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `projects/${project.id}`);
+    } finally {
+      setIsUpdatingParams(false);
+    }
+  };
+
+  const handleUpdateParams = async (newType: string, newQty: number) => {
+    setIsUpdatingParams(true);
+    try {
+      const parsedQty = Math.max(0, newQty);
+      const pricePer = project.pricePerVideo || 0;
+      const budget = parsedQty * pricePer;
+      const received = project.received || 0;
+      const dueMoney = budget - received;
+      const paymentStatus = dueMoney > 0 ? 'Not Paid' : 'Paid';
+
+      await updateDoc(doc(db, 'projects', project.id), {
+        videoType: newType,
+        quantity: parsedQty,
+        budget,
+        dueMoney,
+        paymentStatus,
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `projects/${project.id}`);
+    } finally {
+      setIsUpdatingParams(false);
+    }
+  };
 
   const handleSaveInternalNotes = async () => {
     setIsSavingInternal(true);
@@ -195,6 +249,118 @@ export default function ProjectDetailsPanel({ project: initialProject, isOpen, o
                 <div className="absolute top-6 right-6 opacity-[0.02] group-hover/brief:opacity-10 transition-opacity">
                    <MessageSquare size={100} strokeWidth={1} />
                 </div>
+             </div>
+          </section>
+
+          {/* Production Details (Format and Quantity) */}
+          <section className="space-y-6">
+             <span className="section-header !text-slate-700 ml-1">Production Details</span>
+             <div className="glass-card !p-8 space-y-6 border border-white/[0.03]">
+                {/* Video Format control */}
+                <div className="space-y-2">
+                   <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Video Format</label>
+                   <div className="grid grid-cols-2 gap-3 p-1.5 bg-white/5 rounded-2xl border border-white/5">
+                      {['Short Form', 'Long Form'].map((typeOption) => (
+                         <button
+                            key={typeOption}
+                            type="button"
+                            disabled={isUpdatingParams}
+                            onClick={() => {
+                               setVideoType(typeOption);
+                               handleUpdateParams(typeOption, Number(quantity));
+                            }}
+                            className={cn(
+                               "py-3 rounded-[1.2rem] font-black text-[10px] tracking-widest transition-all",
+                               videoType === typeOption 
+                                  ? "bg-brand-500 text-[#0D1117] shadow-lg shadow-brand-500/10" 
+                                  : "text-slate-400 hover:text-white"
+                            )}
+                         >
+                            {typeOption}
+                         </button>
+                      ))}
+                   </div>
+                </div>
+
+                {/* Quantity control */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                   <div className="space-y-2">
+                      <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Quantity (Decimals Approved)</label>
+                      <div className="relative">
+                         <input 
+                            type="number"
+                            step="any"
+                            min="0"
+                            placeholder="e.g. 1.5"
+                            className="w-full h-12 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm outline-none text-white focus:border-brand-500/50 transition-all font-black"
+                            value={quantity}
+                            onChange={(e) => setQuantity(e.target.value)}
+                            onBlur={() => {
+                               const parsed = parseFloat(quantity as string);
+                               if (!isNaN(parsed) && parsed >= 0) {
+                                  handleUpdateParams(videoType, parsed);
+                               }
+                            }}
+                         />
+                         {String(quantity) !== String(project.quantity) && (
+                            <button
+                               type="button"
+                               onClick={() => {
+                                  const parsed = parseFloat(quantity as string);
+                                  if (!isNaN(parsed) && parsed >= 0) {
+                                     handleUpdateParams(videoType, parsed);
+                                  }
+                               }}
+                               className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black tracking-widest text-[#0D1117] bg-brand-500 px-3 py-1.5 rounded-lg hover:scale-105 transition-all shadow-md"
+                            >
+                               Apply
+                            </button>
+                         )}
+                      </div>
+                   </div>
+
+                   <div className="space-y-1.5 flex flex-col justify-end pb-1 pl-1">
+                      <div className="flex justify-between text-[9px] font-black text-slate-600 uppercase tracking-widest">
+                         <span>Rate per video:</span>
+                         <span className="text-white">Rs. {project.pricePerVideo || 0}</span>
+                      </div>
+                      <div className="flex justify-between text-[9px] font-black text-slate-600 uppercase tracking-widest pt-1">
+                         <span>Recalculated Budget:</span>
+                         <span className="text-brand-500">Rs. {((parseFloat(quantity as string) || 0) * (project.pricePerVideo || 0)).toFixed(2)}</span>
+                      </div>
+                   </div>
+                </div>
+
+                {videoType === 'Long Form' && (
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-white/5 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="space-y-2">
+                         <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Video Duration (hh:mm:ss)</label>
+                         <div className="relative">
+                            <input 
+                               type="text"
+                               placeholder="e.g. 00:45:00"
+                               className="w-full h-12 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm outline-none text-white focus:border-brand-500/50 transition-all font-black"
+                               value={duration}
+                               onChange={(e) => setDuration(e.target.value)}
+                               onBlur={() => handleUpdateDuration(duration)}
+                            />
+                            {duration !== (project.duration || '') && (
+                               <button
+                                  type="button"
+                                  onClick={() => handleUpdateDuration(duration)}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black tracking-widest text-[#0D1117] bg-brand-500 px-3 py-1.5 rounded-lg hover:scale-105 transition-all shadow-md"
+                               >
+                                  Save
+                               </button>
+                            )}
+                         </div>
+                      </div>
+                      <div className="space-y-1 flex flex-col justify-end pb-2 pl-1 text-[9px] font-black text-slate-500 tracking-widest leading-relaxed">
+                         <p className="text-white italic">Long Form configuration active.</p>
+                         <p className="text-[8px] uppercase tracking-normal opacity-60">This optional duration is saved and printed automatically within generated invoices.</p>
+                      </div>
+                   </div>
+                )}
              </div>
           </section>
 

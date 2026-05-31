@@ -129,7 +129,11 @@
         "priority": { "type": "string", "enum": ["Low", "Medium", "High", "Urgent"] },
         "brief": { "type": "string" },
         "resourceLinks": { "type": "array", "items": { "type": "string" } },
-        "progress": { "type": "string", "enum": ["Working", "Done"] }
+        "progress": { "type": "string", "enum": ["Working", "Done"] },
+        "duration": {
+          "type": "string",
+          "description": "Optional video duration for Long Form videos."
+        }
       },
       "required": ["name", "clientId", "videoType", "budget", "received", "dueMoney", "paymentStatus", "createdAt", "updatedAt", "ownerId"]
     },

@@ -499,7 +499,7 @@ export default function ProjectTracker({ userProfile }: { userProfile?: any }) {
                              p.videoType === 'Short Form' ? "bg-brand-500/10 text-brand-500 border-brand-500/20" : 
                              "bg-amber-500/10 text-amber-500 border-amber-500/20"
                            )}>
-                              {p.videoType || 'Short Form'}
+                              {p.videoType || 'Short Form'}{p.videoType === 'Long Form' && p.duration ? ' • ' + p.duration : ''}
                             </div>
                             {p.startDate && p.startDate.toDate && (
                               <div className="flex items-center gap-1 text-[8px] font-black text-slate-400 dark:text-slate-500 tracking-widest mt-1">
