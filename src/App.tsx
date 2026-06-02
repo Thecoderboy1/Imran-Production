@@ -94,6 +94,8 @@ function NavItem({ icon: IconComponent, label, active, onClick, badge, size = 16
 }
 
 function AuthScreen({ onGoogleLogin }: { onGoogleLogin: () => void }) {
+  const isIframe = typeof window !== 'undefined' && window.self !== window.top;
+
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
       <motion.div 
@@ -122,7 +124,27 @@ function AuthScreen({ onGoogleLogin }: { onGoogleLogin: () => void }) {
           <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
         </button>
         
-        <p className="text-[10px] font-black text-slate-600 tracking-[0.3em]">Sign in to your production studio.</p>
+        <p className="text-[10px] font-black text-slate-600 tracking-[0.3em] mb-6">Sign in to your production studio.</p>
+
+        {isIframe && (
+          <div className="p-4 bg-slate-900 border border-white/5 rounded-2xl text-left space-y-2.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex items-start gap-2.5">
+              <span className="text-sm">⚠️</span>
+              <p className="text-[11px] font-bold text-slate-400 leading-normal">
+                Running inside a preview iframe. Popups may be blocked by your browser's security policy.
+              </p>
+            </div>
+            <a 
+              href={window.location.href} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="mt-1 w-full py-2 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 border border-brand-500/10 hover:border-brand-500/20 transition-all text-center"
+            >
+              Open in New Tab
+              <ExternalLink size={12} />
+            </a>
+          </div>
+        )}
       </motion.div>
     </div>
   );
@@ -597,14 +619,38 @@ function AppContent() {
     const provider = new GoogleAuthProvider();
     provider.addScope('https://www.googleapis.com/auth/drive.file');
     try {
+      console.log("[AUTH] Initializing Google Sign-In with popup...");
       const result = await signInWithPopup(auth, provider);
+      console.log("[AUTH] Google Sign-In successful. User:", result.user?.email);
       const credential = GoogleAuthProvider.credentialFromResult(result);
       if (credential?.accessToken) {
         localStorage.setItem('google_drive_access_token', credential.accessToken);
       }
     } catch (error: any) {
-      console.error("Login failed:", error);
-      addToast('error', "Something went wrong. Please try again.");
+      console.error("[AUTH] Detailed Google Sign-In failure:", {
+        code: error.code,
+        message: error.message,
+        customData: error.customData,
+        name: error.name,
+        stack: error.stack
+      });
+
+      let errMsg = "Something went wrong. Please try again.";
+      if (error.code === 'auth/popup-blocked') {
+        errMsg = "Popup blocked! Please allow popups for this site, or run the app in a new tab.";
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        errMsg = "Sign-in popup was closed before completion. Please try again.";
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        errMsg = "Popup sign-in was cancelled. Please try again.";
+      } else if (error.code === 'auth/network-request-failed') {
+        errMsg = "Network request failed. Please check your internet connection.";
+      } else if (error.message && error.message.includes('opener-policy')) {
+        errMsg = "COOP browser policy blocked popup feedback. Try opening the app in a new tab.";
+      } else if (error.message) {
+        errMsg = `Google Sign-in failed: ${error.message}`;
+      }
+      
+      addToast('error', errMsg);
     }
   };
 
