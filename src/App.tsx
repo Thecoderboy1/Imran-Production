@@ -10,8 +10,6 @@ import { formatCurrency, cn } from './lib/utils';
 import { 
   onAuthStateChanged, 
   signInWithPopup, 
-  signInWithRedirect,
-  getRedirectResult,
   GoogleAuthProvider, 
   signOut,
   type User
@@ -397,48 +395,7 @@ function AppContent() {
     return unsubscribe;
   }, [path]);
 
-  // Handle Google Sign-In redirect results
-  useEffect(() => {
-    if (portalToken) return;
 
-    console.log("[AUTH] Initiating getRedirectResult check...");
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) {
-          console.log("[AUTH] Redirect auth success. Active user:", result.user?.email);
-          const credential = GoogleAuthProvider.credentialFromResult(result);
-          if (credential?.accessToken) {
-            localStorage.setItem('google_drive_access_token', credential.accessToken);
-            console.log("[AUTH] Successfully saved drive oauth access token.");
-          }
-          addToast('success', "Authenticated successfully!");
-        } else {
-          console.log("[AUTH] Loaded page normal (no active redirect returned).");
-        }
-      })
-      .catch((error: any) => {
-        console.error("Firebase Error Code:", error.code);
-        console.error("Firebase Error Message:", error.message);
-        console.error("Firebase Error Data:", error.customData);
-        console.error("Full Error:", error);
-
-        let errMsg = "Something went wrong. Please try again.";
-        if (error.code === 'auth/popup-blocked') {
-          errMsg = "Popup blocked! Please allow popups for this site, or run the app in a new tab.";
-        } else if (error.code === 'auth/popup-closed-by-user') {
-          errMsg = "Sign-in popup was closed before completion. Please try again.";
-        } else if (error.code === 'auth/cancelled-popup-request') {
-          errMsg = "Popup sign-in was cancelled. Please try again.";
-        } else if (error.code === 'auth/network-request-failed') {
-          errMsg = "Network request failed. Please check your internet connection.";
-        } else if (error.message && error.message.includes('opener-policy')) {
-          errMsg = "COOP browser policy blocked popup feedback. Try opening the app in a new tab.";
-        } else if (error.message) {
-          errMsg = `Google Sign-in failed: ${error.message}`;
-        }
-        addToast('error', errMsg);
-      });
-  }, [portalToken]);
 
   // Identity Sync and Session Update
   useEffect(() => {
@@ -643,52 +600,42 @@ function AppContent() {
   }, [darkMode]);
 
 
-  const handleLogin = async () => {
-    // Traffic Spike Rate Limiting Check
-    const loginAttempts = JSON.parse(localStorage.getItem('auth_attempts') || '[]');
-    const now = Date.now();
-    const recentAttempts = loginAttempts.filter((t: number) => now - t < 60000);
-    if (recentAttempts.length > 50) {
-      const lockTime = localStorage.getItem('auth_lock_time');
-      if (lockTime && now - parseInt(lockTime) < 600000) {
-        addToast('error', "Too many attempts. Please wait a moment.");
-        return;
-      } else {
-        localStorage.setItem('auth_lock_time', now.toString());
-        addToast('error', "Too many attempts. Rate limited for 10 minutes.");
-        return;
-      }
-    }
-    localStorage.setItem('auth_attempts', JSON.stringify([...recentAttempts, now]));
-
+  const handleLogin = () => {
     const provider = new GoogleAuthProvider();
     provider.addScope('https://www.googleapis.com/auth/drive.file');
-    try {
-      console.log("[AUTH] Initializing Google Sign-In with redirect...");
-      await signInWithRedirect(auth, provider);
-    } catch (error: any) {
-      console.error("Firebase Error Code:", error.code);
-      console.error("Firebase Error Message:", error.message);
-      console.error("Firebase Error Data:", error.customData);
-      console.error("Full Error:", error);
 
-      let errMsg = "Something went wrong. Please try again.";
-      if (error.code === 'auth/popup-blocked') {
-        errMsg = "Popup blocked! Please allow popups for this site, or run the app in a new tab.";
-      } else if (error.code === 'auth/popup-closed-by-user') {
-        errMsg = "Sign-in popup was closed before completion. Please try again.";
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        errMsg = "Popup sign-in was cancelled. Please try again.";
-      } else if (error.code === 'auth/network-request-failed') {
-        errMsg = "Network request failed. Please check your internet connection.";
-      } else if (error.message && error.message.includes('opener-policy')) {
-        errMsg = "COOP browser policy blocked popup feedback. Try opening the app in a new tab.";
-      } else if (error.message) {
-        errMsg = `Google Sign-in failed: ${error.message}`;
-      }
-      
-      addToast('error', errMsg);
-    }
+    console.log("[AUTH] Initializing direct Google Sign-In with popup...");
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        console.log("[AUTH] Google Sign-In successful. User:", result.user?.email);
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        if (credential?.accessToken) {
+          localStorage.setItem('google_drive_access_token', credential.accessToken);
+        }
+      })
+      .catch((error: any) => {
+        console.error("Firebase Error Code:", error.code);
+        console.error("Firebase Error Message:", error.message);
+        console.error("Firebase Error Data:", error.customData);
+        console.error("Full Error:", error);
+
+        let errMsg = "Something went wrong. Please try again.";
+        if (error.code === 'auth/popup-blocked') {
+          errMsg = "Popup blocked! Please allow popups for this site, or run the app in a new tab.";
+        } else if (error.code === 'auth/popup-closed-by-user') {
+          errMsg = "Sign-in popup was closed before completion. Please try again.";
+        } else if (error.code === 'auth/cancelled-popup-request') {
+          errMsg = "Popup sign-in was cancelled. Please try again.";
+        } else if (error.code === 'auth/network-request-failed') {
+          errMsg = "Network request failed. Please check your internet connection.";
+        } else if (error.message && error.message.includes('opener-policy')) {
+          errMsg = "COOP browser policy blocked popup feedback. Try opening the app in a new tab.";
+        } else if (error.message) {
+          errMsg = `Google Sign-in failed: ${error.message}`;
+        }
+        
+        addToast('error', errMsg);
+      });
   };
 
   const handleInviteCode = async (code: string) => {

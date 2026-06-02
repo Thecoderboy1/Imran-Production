@@ -508,15 +508,15 @@ function StatCard({ icon, label, value, sub }: { icon: React.ReactNode, label: s
   return (
     <motion.div 
       whileHover={{ y: -2 }}
-      className="bg-white dark:bg-white/5 p-3 rounded-lg border border-slate-100 dark:border-white/10 premium-shadow glow-hover flex flex-col items-center text-center group relative overflow-hidden min-w-0 h-full"
+      className="bg-white/5 p-3 rounded-lg border border-white/10 premium-shadow glow-hover flex flex-col items-center text-center group relative overflow-hidden min-w-0 h-full"
     >
       <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-brand-500/5 rounded-full blur-[40px] group-hover:bg-brand-500/10 transition-all duration-700" />
-      <div className="w-8 h-8 bg-slate-50 dark:bg-white/5 rounded flex items-center justify-center mb-3 text-slate-900 dark:text-white shadow-inner group-hover:scale-110 group-hover:bg-brand-500/5 transition-all duration-500 shrink-0">
+      <div className="w-8 h-8 bg-white/5 rounded flex items-center justify-center mb-3 text-white shadow-inner group-hover:scale-110 group-hover:bg-brand-500/5 transition-all duration-500 shrink-0">
         {icon}
       </div>
       <p className="text-[6px] font-black text-slate-400 uppercase tracking-widest mb-1 relative z-10 truncate w-full">{label}</p>
-      <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mb-1.5 leading-tight tracking-tighter relative z-10 truncate w-full px-1" title={value}>{value}</h3>
-      <p className="text-[6px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded relative z-10 truncate max-w-full">{sub}</p>
+      <h3 className="text-base sm:text-lg font-black text-white mb-1.5 leading-tight tracking-tighter relative z-10 truncate w-full px-1" title={value}>{value}</h3>
+      <p className="text-[6px] font-black text-slate-400 uppercase tracking-[0.2em] bg-white/10 px-1.5 py-0.5 rounded relative z-10 truncate max-w-full">{sub}</p>
     </motion.div>
   );
 }

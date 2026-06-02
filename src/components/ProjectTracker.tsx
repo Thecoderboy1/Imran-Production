@@ -279,7 +279,7 @@ export default function ProjectTracker({ userProfile }: { userProfile?: any }) {
       case 'Revision': return 'bg-amber-500/10 text-amber-500 border border-amber-500/20';
       case 'Rendering': return 'bg-brand-500/10 text-brand-500 border border-brand-500/20';
       case 'Editing': return 'bg-brand-500/20 text-brand-500 border border-brand-500/30';
-      default: return 'bg-slate-100 dark:bg-white/5 text-slate-500 border border-slate-200 dark:border-white/10';
+      default: return 'bg-white/5 text-slate-400 border border-white/10';
     }
   };
 
@@ -435,12 +435,12 @@ export default function ProjectTracker({ userProfile }: { userProfile?: any }) {
       </AnimatePresence>
 
       {/* Project List View */}
-      <div className="bg-white dark:bg-white/5 rounded-lg border border-slate-100 dark:border-white/10 premium-shadow overflow-hidden flex-1 flex flex-col">
+      <div className="bg-white/5 rounded-lg border border-white/10 premium-shadow overflow-hidden flex-1 flex flex-col">
         <div className="overflow-x-auto">
           {/* table content remains same */}
           <table className="w-full text-left border-collapse min-w-[800px]">
              <thead>
-               <tr className="border-b border-slate-100 dark:border-white/10">
+               <tr className="border-b border-white/10">
                  <th className="px-4 py-3 text-[8px] font-black text-slate-400 tracking-[0.2em]">Production / Client</th>
                  <th className="px-4 py-3 text-[8px] font-black text-slate-400 tracking-[0.2em]">Form Type / Due</th>
                  <th className="px-4 py-3 text-[8px] font-black text-slate-400 tracking-[0.2em]">Financial Standing</th>
@@ -461,7 +461,7 @@ export default function ProjectTracker({ userProfile }: { userProfile?: any }) {
                        exit={{ opacity: 0 }}
                        onClick={() => setSelectedProjectForPanel(p)}
                        className={cn(
-                         "group cursor-pointer hover:bg-brand-500/[0.02] dark:hover:bg-brand-500/[0.05] transition-all duration-300 relative border-b border-slate-100/50 dark:border-white/5"
+                         "group cursor-pointer hover:bg-brand-500/[0.05] transition-all duration-300 relative border-b border-white/5"
                        )}
                      >
                        <td className="px-4 py-3 relative">
@@ -477,7 +477,7 @@ export default function ProjectTracker({ userProfile }: { userProfile?: any }) {
                            </div>
                            <div className="min-w-0">
                              <div className="flex items-center gap-1.5 mb-0.5">
-                               <p className="font-black text-slate-900 dark:text-white tracking-tight text-xs leading-tight truncate">{p.name}</p>
+                               <p className="font-black text-white tracking-tight text-xs leading-tight truncate">{p.name}</p>
                                {isDelayed(p) && (
                                  <span className="bg-red-500/10 text-red-500 text-[6px] font-black px-1.5 py-0.5 rounded-full tracking-tighter">
                                     Delayed
@@ -593,7 +593,7 @@ export default function ProjectTracker({ userProfile }: { userProfile?: any }) {
                            </button>
                            <button 
                              onClick={(e) => { e.stopPropagation(); setDeleteId(p.id); }}
-                             className="p-1.5 bg-slate-100 dark:bg-white/5 text-slate-400 hover:text-red-500 rounded transition-all"
+                             className="p-1.5 bg-white/5 text-slate-400 hover:text-red-500 rounded transition-all cursor-pointer"
                              title="Delete"
                            >
                              <Trash2 size={10} />
@@ -608,7 +608,7 @@ export default function ProjectTracker({ userProfile }: { userProfile?: any }) {
            </table>
         </div>
         {filteredProjects.length === 0 && !loading && (
-          <div className="text-center flex-1 flex flex-col items-center justify-center py-16 bg-slate-50/50 dark:bg-white/5">
+          <div className="text-center flex-1 flex flex-col items-center justify-center py-16 bg-white/5">
             <Video size={32} className="mx-auto text-slate-200 mb-4" />
             <p className="text-slate-500 dark:text-slate-400 font-black tracking-[0.2em] text-[10px] italic">No projects found.</p>
           </div>
@@ -617,13 +617,13 @@ export default function ProjectTracker({ userProfile }: { userProfile?: any }) {
 
       {/* Pipeline Meta Section */}
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0">
-         <div className="bg-white dark:bg-white/5 p-4 rounded-lg border border-slate-100 dark:border-white/10 premium-shadow">
+         <div className="bg-white/5 p-4 rounded-lg border border-white/10 premium-shadow">
             <h4 className="text-[7px] font-black text-slate-400 tracking-widest mb-2">Total Managed Budget</h4>
-            <p className="text-lg font-black text-slate-900 dark:text-white tracking-tighter">
+            <p className="text-lg font-black text-white tracking-tighter">
               {formatCurrency(filteredProjects.reduce((acc, p) => acc + (p.budget || 0), 0))}
             </p>
          </div>
-         <div className="bg-white dark:bg-white/5 p-4 rounded-lg border border-slate-100 dark:border-white/10 premium-shadow">
+         <div className="bg-white/5 p-4 rounded-lg border border-white/10 premium-shadow">
             <h4 className="text-[7px] font-black text-slate-400 tracking-widest mb-2">Active Revisions</h4>
             <p className="text-lg font-black text-amber-500 tracking-tighter">
               {filteredProjects.reduce((acc, p) => acc + (p.revisions || 0), 0)} Instances
@@ -673,15 +673,15 @@ export default function ProjectTracker({ userProfile }: { userProfile?: any }) {
               exit={{ scale: 0.9, opacity: 0 }}
               className="glass p-6 rounded-2xl max-w-sm w-full relative z-10"
             >
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Add Payment</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Enter amount received.</p>
+              <h3 className="text-lg font-bold text-white mb-2">Add Payment</h3>
+              <p className="text-xs text-slate-400 mb-4">Enter amount received.</p>
               <div className="relative mb-4">
                 <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500" size={16} />
                 <input 
                   autoFocus
                   type="number" 
                   placeholder="0.00"
-                  className="w-full pl-10 pr-6 py-3 bg-slate-100 dark:bg-white/5 dark:text-white border-none rounded-xl focus:ring-2 focus:ring-emerald-500/50 outline-none text-sm"
+                  className="w-full pl-10 pr-6 py-3 bg-white/5 text-white border border-white/10 rounded-xl focus:ring-2 focus:ring-emerald-500/50 outline-none text-sm placeholder:text-slate-500"
                   value={additionalPayment}
                   onChange={(e) => setAdditionalPayment(e.target.value)}
                 />
@@ -689,7 +689,7 @@ export default function ProjectTracker({ userProfile }: { userProfile?: any }) {
               <div className="flex gap-2">
                 <button 
                   onClick={() => setPaymentUpdate(null)}
-                  className="flex-1 py-3 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 rounded-xl font-bold hover:bg-slate-200 transition-all text-xs"
+                  className="flex-1 py-3 bg-white/5 text-slate-400 rounded-xl font-bold border border-white/10 hover:bg-white/10 transition-all text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -722,15 +722,15 @@ export default function ProjectTracker({ userProfile }: { userProfile?: any }) {
               exit={{ scale: 0.9, opacity: 0 }}
               className="glass p-6 rounded-2xl max-w-xs w-full relative z-10 text-center"
             >
-              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
                 <Trash2 size={24} />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Delete Project?</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">This action cannot be undone.</p>
+              <h3 className="text-lg font-bold text-white mb-1">Delete Project?</h3>
+              <p className="text-xs text-slate-400 mb-6">This action cannot be undone.</p>
               <div className="flex gap-2">
                 <button 
                   onClick={() => setDeleteId(null)}
-                  className="flex-1 py-3 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 rounded-xl font-bold hover:bg-slate-200 transition-all text-xs"
+                  className="flex-1 py-3 bg-white/5 text-slate-400 rounded-xl font-bold border border-white/10 hover:bg-white/10 transition-all text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -763,15 +763,15 @@ export default function ProjectTracker({ userProfile }: { userProfile?: any }) {
               exit={{ scale: 0.9, opacity: 0 }}
               className="glass p-6 rounded-2xl max-w-xs w-full relative z-10 text-center"
             >
-              <div className="w-12 h-12 bg-brand-100 dark:bg-brand-900/30 text-brand-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-brand-500/10 text-brand-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-brand-500/20">
                 <Copy size={24} />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Duplicate Project?</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 font-medium italic">A copy will be created with same client and budget. Status and dates will reset.</p>
+              <h3 className="text-lg font-bold text-white mb-1">Duplicate Project?</h3>
+              <p className="text-xs text-slate-400 mb-6 font-medium italic">A copy will be created with same client and budget. Status and dates will reset.</p>
               <div className="flex gap-2">
                 <button 
                   onClick={() => setDuplicateId(null)}
-                  className="flex-1 py-3 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 rounded-xl font-bold hover:bg-slate-200 transition-all text-xs"
+                  className="flex-1 py-3 bg-white/5 text-slate-400 rounded-xl font-bold border border-white/10 hover:bg-white/10 transition-all text-xs cursor-pointer"
                 >
                   Cancel
                 </button>

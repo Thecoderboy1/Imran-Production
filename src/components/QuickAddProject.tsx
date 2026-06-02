@@ -138,12 +138,12 @@ export default function QuickAddProject({ isOpen, userProfile, onClose, onSucces
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/75 backdrop-blur-md z-[100] flex items-center justify-center p-4">
       <motion.div 
         initial={{ opacity: 0, y: 50, scale: 0.9 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 50, scale: 0.9 }}
-        className="glass dark:bg-slate-900 rounded-lg overflow-hidden shadow-2xl max-w-xl w-full flex flex-col max-h-[90vh] border-none"
+        className="bg-[#0D1117] border border-white/10 rounded-lg overflow-hidden shadow-2xl max-w-xl w-full flex flex-col max-h-[90vh]"
       >
         <div className="bg-brand-600 p-4 sm:p-5 text-white flex flex-col sm:flex-row justify-between items-center text-center sm:text-left relative overflow-hidden gap-3">
           <div className="relative z-10">
@@ -167,7 +167,7 @@ export default function QuickAddProject({ isOpen, userProfile, onClose, onSucces
                   required
                   type="text" 
                   placeholder="e.g. Wedding Highlight"
-                  className="w-full bg-slate-100 dark:bg-white/5 dark:text-white border border-transparent rounded px-3 py-2 focus:ring-2 focus:ring-brand-500/50 outline-none transition-all font-bold text-xs"
+                  className="w-full bg-white/5 text-white border border-white/10 rounded px-3 py-2 focus:ring-2 focus:ring-brand-500/50 outline-none transition-all font-bold text-xs placeholder:text-slate-500"
                   value={formData.name}
                   onChange={e => setFormData({...formData, name: e.target.value})}
                 />
@@ -179,13 +179,13 @@ export default function QuickAddProject({ isOpen, userProfile, onClose, onSucces
                 </label>
                 <select 
                   required
-                  className="w-full bg-slate-100 dark:bg-white/5 dark:text-white border-none rounded px-3 py-2 focus:ring-2 focus:ring-brand-500/50 appearance-none font-bold text-xs cursor-pointer"
+                  className="w-full bg-white/5 text-white border border-white/10 rounded px-3 py-2 focus:ring-2 focus:ring-brand-500/50 appearance-none font-bold text-xs cursor-pointer outline-none"
                   value={formData.clientId}
                   onChange={e => setFormData({...formData, clientId: e.target.value})}
                 >
-                  <option value="" className="bg-white dark:bg-navy-900">Select partner...</option>
+                  <option value="" className="bg-slate-900 text-white">Select partner...</option>
                   {clients.map(client => (
-                    <option key={client.id} value={client.id} className="bg-white dark:bg-navy-900">{client.name}</option>
+                    <option key={client.id} value={client.id} className="bg-slate-900 text-white">{client.name}</option>
                   ))}
                 </select>
               </div>
@@ -194,14 +194,14 @@ export default function QuickAddProject({ isOpen, userProfile, onClose, onSucces
             <div className="space-y-3">
               <div>
                 <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Production Type</label>
-                <div className="flex gap-1.5 bg-slate-100 dark:bg-white/5 p-1 rounded">
+                <div className="flex gap-1.5 bg-white/5 p-1 rounded border border-white/10">
                   {['Short Form', 'Long Form'].map(t => (
                     <button
                       key={t}
                       type="button"
                       onClick={() => setFormData({...formData, videoType: t})}
-                      className={`flex-1 py-1 rounded font-black text-[7px] uppercase tracking-widest transition-all ${
-                        formData.videoType === t ? 'bg-brand-500 text-white shadow-md' : 'text-slate-500 dark:text-slate-400 hover:text-brand-500'
+                      className={`flex-1 py-1 rounded font-black text-[7px] uppercase tracking-widest transition-all cursor-pointer ${
+                        formData.videoType === t ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-brand-500'
                       }`}
                     >
                       {t}
@@ -212,20 +212,20 @@ export default function QuickAddProject({ isOpen, userProfile, onClose, onSucces
 
                <div>
                  <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-1">Urgency</label>
-                 <div className="flex gap-1 bg-slate-100 dark:bg-white/5 p-1 rounded">
+                 <div className="flex gap-1 bg-white/5 p-1 rounded border border-white/10">
                    {['Low', 'Normal', 'High', 'Urgent'].map(u => (
                      <button
                        key={u}
                        type="button"
                        onClick={() => setFormData({...formData, urgency: u})}
-                       className={`flex-1 py-1 rounded font-black text-[6px] uppercase tracking-widest transition-all ${
-                         formData.urgency === u ? 'bg-brand-500 text-white shadow-md' : 'text-slate-500 dark:text-slate-400 hover:text-brand-500'
+                       className={`flex-1 py-1 rounded font-black text-[6px] uppercase tracking-widest transition-all cursor-pointer ${
+                         formData.urgency === u ? 'bg-brand-500 text-white shadow-md' : 'text-slate-400 hover:text-brand-500'
                        }`}
                      >
                        {u}
                      </button>
                    ))}
-                 </div>
+                  </div>
                </div>
 
                {formData.videoType === 'Long Form' && (
@@ -236,7 +236,7 @@ export default function QuickAddProject({ isOpen, userProfile, onClose, onSucces
                    <input
                      type="text"
                      placeholder="e.g. 00:45:00"
-                     className="w-full bg-slate-100 dark:bg-white/5 dark:text-white border border-transparent rounded px-3 py-1.5 focus:ring-2 focus:ring-brand-500/50 outline-none font-bold text-xs"
+                     className="w-full bg-white/5 text-white border border-white/10 rounded px-3 py-1.5 focus:ring-2 focus:ring-brand-500/50 outline-none font-bold text-xs placeholder:text-slate-500"
                      value={formData.duration || ''}
                      onChange={e => setFormData({...formData, duration: e.target.value})}
                    />
@@ -253,7 +253,7 @@ export default function QuickAddProject({ isOpen, userProfile, onClose, onSucces
                 <input 
                   type="url" 
                   placeholder="https://drive..."
-                  className="w-full bg-slate-100 dark:bg-white/5 dark:text-white border border-transparent rounded px-3 py-1.5 focus:ring-2 focus:ring-brand-500/50 outline-none font-medium text-[10px]"
+                  className="w-full bg-white/5 text-white border border-white/10 rounded px-3 py-1.5 focus:ring-2 focus:ring-brand-500/50 outline-none font-medium text-[10px] placeholder:text-slate-500"
                   value={formData.driveLink}
                   onChange={e => setFormData({...formData, driveLink: e.target.value})}
                 />
@@ -262,34 +262,34 @@ export default function QuickAddProject({ isOpen, userProfile, onClose, onSucces
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[7px] font-black text-slate-400 uppercase tracking-widest mb-1 pl-1">Start</label>
-                  <input type="date" className="w-full bg-slate-100 dark:bg-white/5 dark:text-white border-none rounded px-3 py-1.5 font-bold text-[10px]" value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})} />
+                  <input type="date" className="w-full bg-white/5 text-white border border-white/10 rounded px-3 py-1.5 font-bold text-[10px] outline-none [color-scheme:dark]" value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})} />
                 </div>
                 <div>
                   <label className="block text-[7px] font-black text-brand-500 uppercase tracking-widest mb-1 pl-1">Final Due</label>
-                  <input type="date" className="w-full bg-slate-100 dark:bg-white/5 dark:text-white border border-brand-500/20 rounded px-3 py-1.5 font-bold text-[10px]" value={formData.dueDate} onChange={e => setFormData({...formData, dueDate: e.target.value})} />
+                  <input type="date" className="w-full bg-white/5 text-white border border-brand-500/20 rounded px-3 py-1.5 font-bold text-[10px] outline-none [color-scheme:dark]" value={formData.dueDate} onChange={e => setFormData({...formData, dueDate: e.target.value})} />
                 </div>
               </div>
           </div>
 
           <div className="pt-2">
-            <div className="bg-slate-200 dark:bg-white/10 px-3 py-1.5 rounded-t-lg border-b border-white/5">
-               <span className="text-[7px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">[ project budget & quantity ]</span>
+            <div className="bg-slate-950/40 px-3 py-1.5 rounded-t-lg border border-white/10 border-b-0">
+               <span className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em]">[ project budget & quantity ]</span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-slate-100 dark:bg-white/5 rounded-b-lg border border-transparent">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-white/5 rounded-b-lg border border-white/10">
                <div className="flex flex-col justify-center">
                   <div className="grid grid-cols-2 gap-3">
                      <div>
                         <label className="block text-[7px] font-black text-slate-400 uppercase mb-1 pl-1">Quantity</label>
-                        <input type="number" step="any" min="0" className="w-full bg-white dark:bg-slate-900 border-none rounded px-2 py-1.5 font-black text-xs" value={formData.quantity} onChange={e => setFormData({...formData, quantity: e.target.value as any})} />
+                        <input type="number" step="any" min="0" className="w-full bg-slate-950/60 text-white border border-white/10 rounded px-2 py-1.5 font-black text-xs outline-none focus:ring-2 focus:ring-brand-500/50" value={formData.quantity} onChange={e => setFormData({...formData, quantity: e.target.value as any})} />
                      </div>
                      <div>
                         <label className="block text-[7px] font-black text-slate-400 uppercase mb-1 pl-1">Project Price</label>
-                        <input type="number" className="w-full bg-white dark:bg-slate-900 border-none rounded px-2 py-1.5 font-black text-xs" value={formData.pricePerVideo} onChange={e => setFormData({...formData, pricePerVideo: Number(e.target.value)})} />
+                        <input type="number" className="w-full bg-slate-950/60 text-white border border-white/10 rounded px-2 py-1.5 font-black text-xs outline-none focus:ring-2 focus:ring-brand-500/50" value={formData.pricePerVideo} onChange={e => setFormData({...formData, pricePerVideo: Number(e.target.value)})} />
                      </div>
                   </div>
                </div>
                <div className="flex flex-col gap-3">
-                  <div className="p-3 bg-slate-900 rounded text-white flex items-center justify-between shadow-inner">
+                  <div className="p-3 bg-slate-950/80 border border-brand-500/10 rounded text-white flex items-center justify-between shadow-inner">
                      <label className="text-[7px] font-black text-brand-500 uppercase tracking-widest">Total Budget</label>
                      <span className="text-sm font-black tracking-tighter">Rs. {formData.budget}</span>
                   </div>
@@ -300,7 +300,7 @@ export default function QuickAddProject({ isOpen, userProfile, onClose, onSucces
           <button 
             type="submit"
             disabled={!formData.clientId || !formData.name}
-            className="w-full bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded font-black text-xs transition-all shadow-xl shadow-brand-500/30 uppercase tracking-widest active:scale-[0.98]"
+            className="w-full bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded font-black text-xs transition-all shadow-xl shadow-brand-500/30 uppercase tracking-widest active:scale-[0.98] cursor-pointer"
           >
             Create Entry
           </button>
